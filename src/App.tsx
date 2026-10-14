@@ -795,6 +795,18 @@ export default function App() {
 
   // ---------- editor ----------
 
+  /** + New button default: next quarter-hour if looking at today,
+   *  otherwise the after-school default. Right-click/drag creation
+   *  already pre-fills from the exact slot tapped. */
+  const smartCreate = () => {
+    const day = visibleDay;
+    let start = day === weekdayToday()
+      ? Math.ceil(minutesNow() / 15) * 15
+      : 16 * 60;
+    if (start > 1440 - 15) start = 1440 - 15;
+    openCreate(day, start, Math.min(start + 60, 1440));
+  };
+
   const openCreate = (day: Weekday, start: number, end: number) => {
     setEditor({
       activityId: null,
@@ -949,7 +961,7 @@ export default function App() {
               <button
                 type="button"
                 className="btn"
-                onClick={() => openCreate(visibleDay, 16 * 60, 17 * 60)}
+                onClick={smartCreate}
               >
                 ＋ New activity
               </button>
