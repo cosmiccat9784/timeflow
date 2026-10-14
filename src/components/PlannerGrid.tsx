@@ -101,12 +101,12 @@ export function PlannerGrid({
   const visStart = settings.visibleStartMinutes;
   const visEnd = settings.visibleEndMinutes;
   const slots = Math.max(1, Math.round((visEnd - visStart) / SLOT));
+  const [slotH, setSlotH] = useState(MIN_SLOT_H);
   const colH = slots * slotH;
   const days: Weekday[] = view === "week" ? [0, 1, 2, 3, 4, 5, 6] : [visibleDay];
 
   const colRefs = useRef(new Map<number, HTMLDivElement>());
   const gridRef = useRef<HTMLDivElement>(null);
-  const [slotH, setSlotH] = useState(MIN_SLOT_H);
   const [preview, setPreview] = useState<Preview>(null);
   const [kbMove, setKbMove] = useState<{ key: string; day: Weekday; start: number } | null>(null);
   const lastTap = useRef<{ key: string; at: number } | null>(null);
