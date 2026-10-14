@@ -35,8 +35,6 @@ jobs:
           - os: macos-latest
             target: dmg
           - os: ubuntu-22.04
-
-line 37
             target: appimage
     runs-on: ${{ matrix.os }}
     steps:
