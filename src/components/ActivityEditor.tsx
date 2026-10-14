@@ -14,6 +14,8 @@ export interface EditorDraft {
   weekday: Weekday;
   startTime: number;
   endTime: number;
+  /** False until the user picks squares in the grid picker (new only). */
+  timeSet: boolean;
   notes: string;
   optionalWorkOverride: "inherit" | "yes" | "no";
   startEnabled: boolean;
@@ -33,6 +35,7 @@ export function draftFromActivity(a: Activity, memberCount = 1): EditorDraft {
     weekday: a.weekday,
     startTime: a.startTime,
     endTime: a.endTime,
+    timeSet: true,
     notes: a.notes ?? "",
     optionalWorkOverride: a.optionalWorkOverride ?? "inherit",
     startEnabled: a.reminderPreferences?.startEnabled ?? true,
@@ -42,8 +45,6 @@ export function draftFromActivity(a: Activity, memberCount = 1): EditorDraft {
     memberCount,
   };
 }
-
-export function draftToActivity(d: EditorDraft, categories: Category[]): Activity | null {
   const cat = categoryById(categories, d.categoryId);
   if (!cat) return null;
   const t = nowIso();
@@ -84,6 +85,7 @@ function TimeRangePicker({
   weekday,
   start,
   end,
+  active,
   activities,
   clockFormat,
   onPick,
@@ -91,6 +93,7 @@ function TimeRangePicker({
   weekday: Weekday;
   start: number;
   end: number;
+  active: boolean;
   activities: Activity[];
   clockFormat: ClockFormat;
   onPick: (start: number, end: number) => void;
@@ -129,7 +132,7 @@ function TimeRangePicker({
           <div className="slot-btns">
             {[0, 1, 2, 3].map((q) => {
               const t = h * 60 + q * 15;
-              const selected = t >= start && t < end;
+              const selected = active && t >= start && t < end;
               const busy = occupied.has(t);
               return (
                 <button
@@ -209,6 +212,8 @@ export function ActivityEditor({
   };
 
   const previewErrors = useMemo(() => {
+    if (d.activityId === null && !d.timeSet)
+      return [{ field: "time", message: "Tap the grid below to choose the time." }];
     const a = draftToActivity(d, categories);
     if (!a) return [{ field: "categoryId", message: "The selected category does not exist." }];
     return validateActivity(a, categories);
@@ -217,6 +222,10 @@ export function ActivityEditor({
   const duration = d.endTime - d.startTime;
 
   const commit = () => {
+    if (d.activityId === null && !d.timeSet) {
+      setError("Tap the grid to choose a start and end time first.");
+      return;
+    }
     const a = draftToActivity(d, categories);
     if (!a) {
       setError("The selected category does not exist.");
@@ -282,9 +291,10 @@ export function ActivityEditor({
               weekday={d.weekday}
               start={d.startTime}
               end={d.endTime}
+              active={d.timeSet}
               activities={activities}
               clockFormat={clockFormat}
-              onPick={(startTime, endTime) => setD((prev) => ({ ...prev, startTime, endTime }))}
+              onPick={(startTime, endTime) => setD((prev) => ({ ...prev, startTime, endTime, timeSet: true }))}
             />
           </div>
         ) : (

@@ -795,19 +795,14 @@ export default function App() {
 
   // ---------- editor ----------
 
-  /** + New button default: next quarter-hour if looking at today,
-   *  otherwise the after-school default. Right-click/drag creation
-   *  already pre-fills from the exact slot tapped. */
+  /** + New button: no preset time — the grid picker starts blank and the
+   *  user's taps become the time. Slot-based creation (click/drag/right-
+   *  click) keeps prefilling from the exact slot tapped. */
   const smartCreate = () => {
-    const day = visibleDay;
-    let start = day === weekdayToday()
-      ? Math.ceil(minutesNow() / 15) * 15
-      : 16 * 60;
-    if (start > 1440 - 15) start = 1440 - 15;
-    openCreate(day, start, Math.min(start + 60, 1440));
+    openCreate(visibleDay, 0, 0, false);
   };
 
-  const openCreate = (day: Weekday, start: number, end: number) => {
+  const openCreate = (day: Weekday, start: number, end: number, preset = true) => {
     setEditor({
       activityId: null,
       name: "",
@@ -816,6 +811,7 @@ export default function App() {
       weekday: day,
       startTime: start,
       endTime: end,
+      timeSet: preset,
       notes: "",
       optionalWorkOverride: "inherit",
       startEnabled: true,
