@@ -13,6 +13,8 @@ export interface MergedBlock {
  * Compatible activities (same day, name, category, subject, reminder
  * config, override + exact adjacency) render as one continuous block.
  * Underlying records are NEVER combined.
+ * Note: merging keys on the raw name, so two adjacent unnamed blocks of
+ * the same category merge (both display the category name) — intended.
  */
 function reminderKey(a: Activity): string {
   const r = a.reminderPreferences;

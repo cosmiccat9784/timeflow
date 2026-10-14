@@ -246,14 +246,14 @@ export function ActivityEditor({
         )}
         {error && <div className="error-box" role="alert">{error}</div>}
         <div className="field">
-          <label htmlFor="ed-name">Activity name (required)</label>
+          <label htmlFor="ed-name">Activity name (optional — blank uses the category)</label>
           <input
             id="ed-name"
             autoFocus
             value={d.name}
             list="ed-names"
             onChange={(e) => onNameChange(e.target.value)}
-            placeholder="e.g. Mathematics homework"
+            placeholder="e.g. Mathematics homework, or blank for just “Study”"
           />
           <datalist id="ed-names">
             {existingNames.slice(0, 50).map((n) => <option key={n} value={n} />)}

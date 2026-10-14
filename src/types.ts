@@ -89,6 +89,16 @@ export function nowIso(): string {
   return new Date().toISOString();
 }
 
+/** Display name: explicit activity name, falling back to the category name.
+ *  Names are optional — an unnamed block simply shows its category. */
+export function displayName(
+  activity: Pick<Activity, "name" | "categoryId">,
+  categories: Category[],
+): string {
+  const n = activity.name.trim();
+  if (n) return n;
+  return categories.find((c) => c.id === activity.categoryId)?.name ?? "Untitled";
+}
 /** Effective counting for one activity given its category. */
 export function effectiveCounts(
   activity: Pick<Activity, "optionalWorkOverride">,

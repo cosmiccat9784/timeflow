@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Activity, GlobalSettings, PersistedState, Weekday } from "./types";
-import { WEEKDAY_NAMES, WEEKDAY_SHORT, nowIso, uid } from "./types";
+import type { Activity, Category, GlobalSettings, PersistedState, Weekday } from "./types";
+import { WEEKDAY_NAMES, WEEKDAY_SHORT, displayName, nowIso, uid } from "./types";
 import { DEFAULT_CATEGORIES } from "./categories";
 import { defaultCategoryForName } from "./categories";
 import { SLOT, formatDuration, formatTime } from "./time";
@@ -24,8 +24,8 @@ interface PendingOp {
   conflicts: string; // human-readable description
 }
 
-function describeConflicts(names: Activity[]): string {
-  const uniq = [...new Set(names.map((a) => `“${a.name}” (${WEEKDAY_SHORT[a.weekday]} ${formatTime(a.startTime)}–${formatTime(a.endTime)})`))];
+function describeConflicts(names: Activity[], categories: Category[]): string {
+  const uniq = [...new Set(names.map((a) => `“${displayName(a, categories)}” (${WEEKDAY_SHORT[a.weekday]} ${formatTime(a.startTime)}–${formatTime(a.endTime)})`))];
   return uniq.slice(0, 4).join("; ") + (uniq.length > 4 ? ` (+${uniq.length - 4} more)` : "");
 }
 
@@ -132,6 +132,7 @@ export default function App() {
   );
 
   const say = (msg: string) => setAnnounce(msg);
+  const nameOf = (a: Activity) => displayName(a, categories);
 
   // Routine success toasts respect the Settings toggle; errors always show.
   const showToastsRef = useRef(settings.showToasts);
@@ -172,7 +173,7 @@ export default function App() {
       if (err) setToast({ message: err });
       else notify({ message: label, undoLabel: "Undo", onUndo: doUndo });
     } else {
-      setPending({ label, next, conflicts: describeConflicts(hit) });
+      setPending({ label, next, conflicts: describeConflicts(hit, categories) });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commit]);
@@ -223,7 +224,7 @@ export default function App() {
     const next = activities.map((x) =>
       ids.has(x.id) ? { ...x, categoryId: other, updatedAt: nowIso() } : x,
     );
-    const err = commit(next, `Switched ${block.members[0].name} to ${categories.find((c) => c.id === other)?.name ?? other}`);
+    const err = commit(next, `Switched ${nameOf(block.members[0])} to ${categories.find((c) => c.id === other)?.name ?? other}`);
     if (err) setToast({ message: err });
     else {
       lastCategory.current = other;
@@ -246,7 +247,7 @@ export default function App() {
     const ids = new Set(block.members.map((m) => m.id));
     const next = activities.filter((x) => !ids.has(x.id));
     setMenu(null);
-    const err = commit(next, `Deleted ${block.members[0].name}`);
+    const err = commit(next, `Deleted ${nameOf(block.members[0])}`);
     if (err) setToast({ message: err });
     else {
       if (selectedKey === block.key) setSelectedKey(null);
@@ -269,7 +270,7 @@ export default function App() {
     });
     const next = [...activities, ...clones];
     setMenu(null);
-    commitWithConflictCheck(next, clones, `Duplicated ${block.members[0].name}`);
+    commitWithConflictCheck(next, clones, `Duplicated ${nameOf(block.members[0])}`);
   };
 
   const moveBlock = (blockKey: string, day: Weekday, start: number) => {
@@ -291,7 +292,7 @@ export default function App() {
       return;
     }
     const next = activities.map((x) => moved.find((m) => m.id === x.id) ?? x);
-    commitWithConflictCheck(next, moved, `Moved ${block.members[0].name} to ${WEEKDAY_NAMES[day]} ${formatTime(start)}`);
+    commitWithConflictCheck(next, moved, `Moved ${nameOf(block.members[0])} to ${WEEKDAY_NAMES[day]} ${formatTime(start)}`);
   };
 
   const resizeBlock = (blockKey: string, edge: "top" | "bottom", time: number) => {
@@ -315,7 +316,7 @@ export default function App() {
       return;
     }
     const next = activities.map((x) => (x.id === member.id ? updated : x));
-    commitWithConflictCheck(next, [updated], `Resized ${member.name}`);
+    commitWithConflictCheck(next, [updated], `Resized ${nameOf(member)}`);
   };
 
   /** Atomic swap: each takes the other's start position, keeps own duration (§9.6). */
@@ -348,9 +349,9 @@ export default function App() {
     const rest = next.filter((x) => x.id !== a2.id && x.id !== b2.id);
     const hit = [...conflictsForCandidate(a2, rest), ...conflictsForCandidate(b2, rest)];
     if (hit.length > 0) {
-      setPending({ label: `Swapped ${am.name} and ${bm.name}`, next, conflicts: describeConflicts(hit) });
+      setPending({ label: `Swapped ${nameOf(am)} and ${nameOf(bm)}`, next, conflicts: describeConflicts(hit, categories) });
     } else {
-      const err = commit(next, `Swapped ${am.name} and ${bm.name}`);
+      const err = commit(next, `Swapped ${nameOf(am)} and ${nameOf(bm)}`);
       notify(err ? { message: err } : { message: "Swapped. ", undoLabel: "Undo", onUndo: doUndo });
     }
     setSwapFrom(null);
@@ -391,7 +392,7 @@ export default function App() {
       next = [...activities, withMeta];
       lastCategory.current = withMeta.categoryId;
       setEditor(null);
-      commitWithConflictCheck(next, [withMeta], `Created ${withMeta.name}`);
+      commitWithConflictCheck(next, [withMeta], `Created ${nameOf(withMeta)}`);
       return null;
     }
     const prev = activities.find((x) => x.id === activity.id);
@@ -400,7 +401,7 @@ export default function App() {
     lastCategory.current = updated.categoryId;
     // Merge-aware: renaming/splitting notice is automatic via re-render (§8.5).
     setEditor(null);
-    commitWithConflictCheck(next, [updated], `Edited ${updated.name}`);
+    commitWithConflictCheck(next, [updated], `Edited ${nameOf(updated)}`);
     return null;
   };
 
@@ -434,7 +435,7 @@ export default function App() {
     setMenu(null);
     const tail = block.members[block.members.length - 1];
     setEditor(draftFromActivity(tail, 1));
-    say(`Split: editing ${tail.name} ${formatTime(tail.startTime)}–${formatTime(tail.endTime)} independently`);
+    say(`Split: editing ${nameOf(tail)} ${formatTime(tail.startTime)}–${formatTime(tail.endTime)} independently`);
   };
 
   // ---------- render ----------
@@ -473,7 +474,7 @@ export default function App() {
             {showConflicts && (
               <ul>
                 {conflicts.slice(0, 8).map((c, i) => (
-                  <li key={i}>{c.aName} ↔ {c.bName} ({WEEKDAY_SHORT[c.weekday]} {formatTime(c.overlapStart)}–{formatTime(c.overlapEnd)})</li>
+                  <li key={i}>{c.aName || "(unnamed)"} ↔ {c.bName || "(unnamed)"} ({WEEKDAY_SHORT[c.weekday]} {formatTime(c.overlapStart)}–{formatTime(c.overlapEnd)})</li>
                 ))}
               </ul>
             )}
@@ -512,7 +513,7 @@ export default function App() {
 
         {swapFrom && (
           <div className="notice" role="alert" style={{ margin: "8px 14px 0" }}>
-            Swap mode: click the activity to swap with “{blockByKey.get(swapFrom)?.members[0].name ?? "…"}”.
+            Swap mode: click the activity to swap with “{swapFrom && blockByKey.get(swapFrom) ? nameOf(blockByKey.get(swapFrom)!.members[0]) : "…"}”.
             <button type="button" className="btn" style={{ marginLeft: 8 }} onClick={() => setSwapFrom(null)}>Cancel swap (Esc)</button>
           </div>
         )}
@@ -641,7 +642,7 @@ export default function App() {
             const found = activities.find((a) => a.id === id);
             setEditor(null);
             if (found) {
-              const err = commit(activities.filter((a) => a.id !== id), `Deleted ${found.name}`);
+              const err = commit(activities.filter((a) => a.id !== id), `Deleted ${nameOf(found)}`);
               notify(err ? { message: err } : { message: "Deleted. ", undoLabel: "Undo", onUndo: doUndo });
             }
           } : undefined}
@@ -656,7 +657,7 @@ export default function App() {
             }
             const next = [...activities, clone];
             setEditor(null);
-            commitWithConflictCheck(next, [clone], `Duplicated ${src.name}`);
+            commitWithConflictCheck(next, [clone], `Duplicated ${nameOf(src)}`);
           } : undefined}
         />
       )}

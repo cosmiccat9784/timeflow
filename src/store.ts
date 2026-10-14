@@ -1,6 +1,6 @@
 import type { Activity, GlobalSettings, PersistedState, Timetable, Weekday } from "./types";
 import { SCHEMA_VERSION, STORAGE_KEY, nowIso, uid } from "./types";
-import { DEFAULT_CATEGORIES, DEFAULT_SWITCH_PAIR } from "./categories";
+import { DEFAULT_CATEGORIES, DEFAULT_SWITCH_PAIR, LEGACY_CATEGORY_NAMES } from "./categories";
 import { validateActivity, validateCategories } from "./validation";
 
 export const APP_VERSION = "0.1.0";
@@ -26,7 +26,7 @@ export function defaultState(): PersistedState {
     timetable: defaultTimetable(),
     categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })),
     settings: defaultSettings(),
-    subjects: ["Mathematics", "English", "Piano", "Swimming"],
+    subjects: ["Mathematics", "English", "Piano"],
     savedAt: nowIso(),
   };
 }
@@ -46,6 +46,14 @@ export function migrateState(raw: unknown): PersistedState | null {
       }
       // Forward-fill settings added in later versions.
       if (typeof s.settings.showToasts !== "boolean") s.settings.showToasts = true;
+      // Adopt simplified default category labels, but only where the user
+      // never renamed the category themselves.
+      for (const c of s.categories) {
+        if (LEGACY_CATEGORY_NAMES[c.id] === c.name) {
+          const fresh = DEFAULT_CATEGORIES.find((d) => d.id === c.id);
+          if (fresh) c.name = fresh.name;
+        }
+      }
       return sanitizeState(s);
     }
     // v0 (pre-release, no schemaVersion): best-effort upgrade

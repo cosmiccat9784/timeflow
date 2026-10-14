@@ -16,8 +16,7 @@ export function validateActivity(
   categories: Category[],
 ): ValidationError[] {
   const errors: ValidationError[] = [];
-  if (!activity.name || !activity.name.trim())
-    errors.push({ field: "name", message: "Activity name is required." });
+  // Name is optional: blank activities display their category name.
   if (!categories.some((c) => c.id === activity.categoryId))
     errors.push({ field: "categoryId", message: "The selected category does not exist." });
   if (!Number.isInteger(activity.weekday) || activity.weekday < 0 || activity.weekday > 6)

@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import type * as React from "react";
 import type { Category, ClockFormat, GlobalSettings, Weekday } from "../types";
-import { WEEKDAY_NAMES, WEEKDAY_SHORT } from "../types";
+import { WEEKDAY_NAMES, WEEKDAY_SHORT, displayName } from "../types";
 import { SLOT, clampDay, formatDuration, formatTime, snapToSlot } from "../time";
 import type { MergedBlock } from "../merge";
 
@@ -414,6 +414,7 @@ export function PlannerGrid({
 
   const renderBlock = (b: MergedBlock, dayIdx: number) => {
     const first = b.members[0];
+    const label = displayName(first, categories);
     const cat = catOf(categories, first.categoryId);
     const effStart = kbMove?.key === b.key && preview?.kind === "move" ? preview.start : b.startTime;
     const effDay = kbMove?.key === b.key && preview?.kind === "move" ? preview.day : b.weekday;
@@ -438,19 +439,19 @@ export function PlannerGrid({
           width: `calc(${widthPct}% - 6px)`,
         }}
         role="group"
-        aria-label={`${first.name}, ${WEEKDAY_NAMES[b.weekday]} ${formatTime(b.startTime, clockFormat)} to ${formatTime(b.endTime, clockFormat)}, ${cat?.name ?? "unknown category"}${hasConflict ? ", scheduling conflict" : ""}${b.members.length > 1 ? `, merged block of ${b.members.length}` : ""}`}
+        aria-label={`${label}, ${WEEKDAY_NAMES[b.weekday]} ${formatTime(b.startTime, clockFormat)} to ${formatTime(b.endTime, clockFormat)}, ${cat?.name ?? "unknown category"}${hasConflict ? ", scheduling conflict" : ""}${b.members.length > 1 ? `, merged block of ${b.members.length}` : ""}`}
       >
         <div className="resize-handle top" data-edge="top" aria-hidden="true" />
         <button
           type="button"
           data-focus-target
           onKeyDown={(e) => onBlockKeyDown(e, b, blocksByDay.get(b.weekday)?.findIndex((x) => x.key === b.key) ?? 0)}
-          aria-label={`${first.name}. Press Enter to ${inSwitchPair(b, settings) ? "switch category" : "edit"}. Press M to move with keyboard.`}
+          aria-label={`${label}. Press Enter to ${inSwitchPair(b, settings) ? "switch category" : "edit"}. Press M to move with keyboard.`}
           style={{ all: "unset", display: "block", width: "100%", cursor: "pointer", touchAction: "none" } as React.CSSProperties}
         >
           <span className="bname">
             <span className="bicon" aria-hidden="true">{cat?.icon}</span>
-            {first.name}
+            {label}
             {hasConflict && <span className="conflict-dot" title="Scheduling conflict">⚠ overlap</span>}
           </span>
           {h > 34 && (
