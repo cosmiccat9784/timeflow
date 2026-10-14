@@ -1,11 +1,12 @@
-import { useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type * as React from "react";
 import type { Category, ClockFormat, GlobalSettings, Weekday } from "../types";
 import { WEEKDAY_NAMES, WEEKDAY_SHORT, displayName } from "../types";
 import { SLOT, clampDay, formatDuration, formatTime, snapToSlot } from "../time";
 import type { MergedBlock } from "../merge";
 
-const SLOT_H = 14; // must match --slot-h in styles.css
+const MIN_SLOT_H = 14; // px per 15-min row before scrolling kicks in
+const MAX_SLOT_H = 64; // cap so ultrawide/tall screens stay readable
 const MOVE_THRESHOLD_PX = 6;
 const LONG_PRESS_MS = 500;
 const TOUCH_DRAG_HOLD_MS = 250;
@@ -100,10 +101,12 @@ export function PlannerGrid({
   const visStart = settings.visibleStartMinutes;
   const visEnd = settings.visibleEndMinutes;
   const slots = Math.max(1, Math.round((visEnd - visStart) / SLOT));
-  const colH = slots * SLOT_H;
+  const colH = slots * slotH;
   const days: Weekday[] = view === "week" ? [0, 1, 2, 3, 4, 5, 6] : [visibleDay];
 
   const colRefs = useRef(new Map<number, HTMLDivElement>());
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [slotH, setSlotH] = useState(MIN_SLOT_H);
   const [preview, setPreview] = useState<Preview>(null);
   const [kbMove, setKbMove] = useState<{ key: string; day: Weekday; start: number } | null>(null);
   const lastTap = useRef<{ key: string; at: number } | null>(null);
@@ -144,7 +147,7 @@ export function PlannerGrid({
     const el = colRefs.current.get(day);
     if (!el) return visStart;
     const r = el.getBoundingClientRect();
-    return visStart + ((clientY - r.top) / SLOT_H) * SLOT;
+    return visStart + ((clientY - r.top) / slotH) * SLOT;
   };
 
   const dayAtClientX = (clientX: number, fallback: Weekday): Weekday => {
@@ -164,6 +167,24 @@ export function PlannerGrid({
     if (press.current) press.current.menuFired = true;
     onEmptyMenu({ x: Math.min(clientX, window.innerWidth - 260), y: Math.min(clientY, window.innerHeight - 140), day, start });
   };
+
+  // Stretch rows so the visible range always fills the window height;
+  // fall back to scrolling once rows would get shorter than the minimum.
+  useLayoutEffect(() => {
+    const measure = () => {
+      const grid = gridRef.current;
+      const parent = grid?.parentElement;
+      if (!grid || !parent) return;
+      const head = grid.querySelector(".day-head") as HTMLElement | null;
+      const headH = head ? head.getBoundingClientRect().height : 48;
+      const avail = parent.clientHeight - headH - 28;
+      const ideal = Math.floor(avail / slots);
+      setSlotH(Math.max(MIN_SLOT_H, Math.min(MAX_SLOT_H, ideal || MIN_SLOT_H)));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [slots, view]);
 
   // ---------- pointer handlers (delegated on container) ----------
 
@@ -426,8 +447,8 @@ export function PlannerGrid({
     const effStart = kbMove?.key === b.key && preview?.kind === "move" ? preview.start : b.startTime;
     const effDay = kbMove?.key === b.key && preview?.kind === "move" ? preview.day : b.weekday;
     if (effDay !== days[dayIdx]) return null;
-    const top = ((effStart - visStart) / SLOT) * SLOT_H;
-    const h = Math.max(20, ((b.endTime - b.startTime) / SLOT) * SLOT_H - 2);
+    const top = ((effStart - visStart) / SLOT) * slotH;
+    const h = Math.max(20, ((b.endTime - b.startTime) / SLOT) * slotH - 2);
     const lanes = lanesByDay.get(b.weekday)?.get(first.id);
     const widthPct = lanes ? 100 / lanes.lanes : 100;
     const leftPct = lanes ? (lanes.lane * 100) / lanes.lanes : 0;
@@ -479,7 +500,7 @@ export function PlannerGrid({
             <div
               key={m.id}
               className="member-divider"
-              style={{ position: "absolute", left: 6, right: 6, top: ((m.startTime - b.startTime) / SLOT) * SLOT_H }}
+              style={{ position: "absolute", left: 6, right: 6, top: ((m.startTime - b.startTime) / SLOT) * slotH }}
               aria-hidden="true"
             />
           ))}
@@ -491,8 +512,8 @@ export function PlannerGrid({
   const previewOverlay = (day: Weekday) => {
     if (!preview) return null;
     if (preview.kind === "create" && preview.day === day) {
-      const top = ((preview.start - visStart) / SLOT) * SLOT_H;
-      const h = Math.max(SLOT_H, ((preview.end - preview.start) / SLOT) * SLOT_H);
+      const top = ((preview.start - visStart) / SLOT) * slotH;
+      const h = Math.max(slotH, ((preview.end - preview.start) / SLOT) * slotH);
       return (
         <div className="create-preview" style={{ top, height: h }} aria-hidden="true">
           {formatTime(preview.start, clockFormat)}–{formatTime(preview.end, clockFormat)}
@@ -504,8 +525,8 @@ export function PlannerGrid({
       const movingKey = press.current?.blockKey ?? kbMove?.key;
       const moving = movingKey ? blockByKey.get(movingKey) : undefined;
       const dur = moving ? moving.endTime - moving.startTime : 60;
-      const top = ((preview.start - visStart) / SLOT) * SLOT_H;
-      const h = Math.max(20, (dur / SLOT) * SLOT_H - 2);
+      const top = ((preview.start - visStart) / SLOT) * slotH;
+      const h = Math.max(20, (dur / SLOT) * slotH - 2);
       return (
         <div className="drag-preview" style={{ top, height: h }} aria-hidden="true">
           {WEEKDAY_SHORT[day]} {formatTime(preview.start, clockFormat)}
@@ -518,6 +539,7 @@ export function PlannerGrid({
   return (
     <div
       className="grid"
+      ref={gridRef}
       role="grid"
       aria-label="Weekly timetable"
       style={{ gridTemplateColumns: `64px repeat(${days.length}, minmax(0, 1fr))` }}
@@ -541,7 +563,7 @@ export function PlannerGrid({
       </div>
       <div className="time-gutter" aria-hidden="true" style={{ position: "relative" }}>
         {hourLabels.map((t) => (
-          <div key={t} className="time-label" style={{ position: "absolute", top: ((t - visStart) / SLOT) * SLOT_H, height: 56, width: "100%" }}>
+          <div key={t} className="time-label" style={{ position: "absolute", top: ((t - visStart) / SLOT) * slotH, height: slotH * 4, width: "100%" }}>
             {formatTime(t, clockFormat)}
           </div>
         ))}
@@ -558,12 +580,12 @@ export function PlannerGrid({
           aria-label={`${WEEKDAY_NAMES[d]} schedule`}
         >
           {Array.from({ length: slots }, (_, i) => (
-            <div key={i} className={`slot-line${i % 4 === 0 ? " hour" : ""}`} aria-hidden="true" />
+            <div key={i} className={`slot-line${i % 4 === 0 ? " hour" : ""}`} style={{ height: slotH }} aria-hidden="true" />
           ))}
           {d === today && nowMinutes >= visStart && nowMinutes < visEnd && (
             <div
               className="now-line"
-              style={{ top: ((nowMinutes - visStart) / SLOT) * SLOT_H }}
+              style={{ top: ((nowMinutes - visStart) / SLOT) * slotH }}
               role="presentation"
               aria-hidden="true"
             />
