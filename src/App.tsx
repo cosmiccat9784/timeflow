@@ -89,6 +89,11 @@ export default function App() {
   const wkKey = recordKey(active.id, curWeek);
   const weekRecord: WeekRecord = state.weekRecords[wkKey] ?? freshWeekRecord(active.id, curWeek);
 
+  // Apply theme to the document (dark mode via data-theme + CSS vars).
+  useEffect(() => {
+    document.documentElement.dataset.theme = settings.theme;
+  }, [settings.theme]);
+
   // Current-time + rollover + reminder tick (30s).
   useEffect(() => {
     const tick = () => {
@@ -921,6 +926,14 @@ export default function App() {
         <div className="nav-group">
           <button type="button" className="nav-btn" onClick={() => setCatOpen(true)}>🏷 Categories</button>
           <button type="button" className="nav-btn" onClick={() => setSettingsOpen(true)}>⚙ Settings</button>
+          <button
+            type="button"
+            className="nav-btn"
+            onClick={() => patchSettings({ theme: settings.theme === "dark" ? "light" : "dark" })}
+            title="Toggle dark mode"
+          >
+            {settings.theme === "dark" ? "☀ Light mode" : "🌙 Dark mode"}
+          </button>
           <button type="button" className="nav-btn" onClick={doUndo} disabled={!undoRef.current.canUndo}>
             ↩ Undo{undoRef.current.undoLabel ? `: ${undoRef.current.undoLabel}` : ""}
           </button>

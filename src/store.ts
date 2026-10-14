@@ -6,10 +6,12 @@ import { validateActivity, validateCategories } from "./validation";
 export const APP_VERSION = "0.2.0";
 
 export function defaultSettings(): GlobalSettings {
+  const darkOS = typeof window !== "undefined" && !!window.matchMedia?.("(prefers-color-scheme: dark)").matches;
   return {
     visibleStartMinutes: 360,
     visibleEndMinutes: 1320,
     clockFormat: "12h",
+    theme: darkOS ? "dark" : "light",
     switchPair: [...DEFAULT_SWITCH_PAIR] as [string, string],
     showToasts: true,
     quietHours: { start: 1320, end: 420 }, // 10pm–7am default
@@ -45,6 +47,7 @@ function fillSettings(s: Partial<GlobalSettings> | undefined): GlobalSettings {
   if (!Array.isArray(merged.switchPair) || merged.switchPair.length !== 2)
     merged.switchPair = [...DEFAULT_SWITCH_PAIR] as [string, string];
   if (typeof merged.showToasts !== "boolean") merged.showToasts = true;
+  if (merged.theme !== "light" && merged.theme !== "dark") merged.theme = "light";
   if (!merged.quietHours || typeof merged.quietHours !== "object")
     merged.quietHours = { ...d.quietHours };
   if (!merged.reminderDefaults || typeof merged.reminderDefaults !== "object")

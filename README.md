@@ -148,6 +148,9 @@ src-tauri/
 - **Simpler default labels.** Sport / Study / Work / Meals / Extracurricular
   instead of the longer §7.2 names. Stored timetables adopt them only where the
   user never renamed the category.
+- **Dark mode.** Spec §29 deferred it; implemented on request. Toggle in the
+  sidebar or Settings → Appearance (fresh installs follow the OS preference).
+  Category blocks stay pastel so colours keep their meaning.
 
 ## Acceptance tests
 

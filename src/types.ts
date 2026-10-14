@@ -89,6 +89,8 @@ export interface RestorePoint {
 
 export type ClockFormat = "12h" | "24h";
 
+export type Theme = "light" | "dark";
+
 export interface QuietHours {
   start: number | null; // minutes from midnight, null = off
   end: number | null;
@@ -104,6 +106,7 @@ export interface GlobalSettings {
   visibleStartMinutes: number; // default 360 (06:00)
   visibleEndMinutes: number; // default 1320 (22:00)
   clockFormat: ClockFormat;
+  theme: Theme;
   /** quick-switch pair, default [study, personal] */
   switchPair: [string, string];
   /** routine confirmation toasts (Switched, Deleted…); errors always show */

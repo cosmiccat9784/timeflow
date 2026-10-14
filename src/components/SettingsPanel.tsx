@@ -102,6 +102,14 @@ export function SettingsPanel({
         </div>
 
         <div className="settings-row">
+          <span id="theme-label">Appearance</span>
+          <div role="radiogroup" aria-labelledby="theme-label" style={{ display: "flex", gap: 8 }}>
+            <label><input type="radio" checked={settings.theme === "light"} onChange={() => onChange({ ...settings, theme: "light" })} /> Light</label>
+            <label><input type="radio" checked={settings.theme === "dark"} onChange={() => onChange({ ...settings, theme: "dark" })} /> Dark</label>
+          </div>
+        </div>
+
+        <div className="settings-row">
           <label htmlFor="set-toasts">Confirmation popups</label>
           <input
             id="set-toasts"

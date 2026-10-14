@@ -45,6 +45,8 @@ export function draftFromActivity(a: Activity, memberCount = 1): EditorDraft {
     memberCount,
   };
 }
+
+export function draftToActivity(d: EditorDraft, categories: Category[]): Activity | null {
   const cat = categoryById(categories, d.categoryId);
   if (!cat) return null;
   const t = nowIso();

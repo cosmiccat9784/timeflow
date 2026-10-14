@@ -342,6 +342,49 @@ button { cursor: pointer; }
   * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 
+/* ---------- Dark mode (owner-requested; spec §29 listed it out of scope) ----------
+   Category blocks stay pastel so colours keep their meaning; chrome goes dark. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #14161b;
+  --surface: #1e222b;
+  --ink: #e9ebf1;
+  --ink-soft: #a7afbe;
+  --line: #343b48;
+  --grid-line: #272d38;
+  --accent: #5b8def;
+  --focus: #8ab4ff;
+  --shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+  --danger: #ef9a9a;
+}
+[data-theme="dark"] .modal-backdrop { background: rgba(0, 0, 0, 0.6); }
+[data-theme="dark"] .slot-line.hour { border-bottom-color: #3a4150; }
+[data-theme="dark"] .slot-line:hover { background: #262c38; }
+[data-theme="dark"] .day-head.today { background: #232c44; }
+[data-theme="dark"] .day-col.today { background: #181e2c; }
+[data-theme="dark"] .segmented button[aria-pressed="true"],
+[data-theme="dark"] .nav-btn[aria-pressed="true"],
+[data-theme="dark"] .nav-btn.active,
+[data-theme="dark"] .day-tabs button[aria-selected="true"],
+[data-theme="dark"] .bottom-tabs button[aria-pressed="true"] { background: #26314d; border-color: #3d4f7d; }
+[data-theme="dark"] .menu button:hover,
+[data-theme="dark"] .menu button:focus-visible { background: #26314d; }
+[data-theme="dark"] .field input,
+[data-theme="dark"] .field select,
+[data-theme="dark"] .field textarea { background: #262c37; color: var(--ink); border-color: var(--line); }
+[data-theme="dark"] .data-table { background: var(--surface); }
+[data-theme="dark"] .data-table input,
+[data-theme="dark"] .data-table select { background: #262c37; color: var(--ink); border-color: var(--line); }
+[data-theme="dark"] .slot-btn { background: #262c37; color: var(--ink-soft); }
+[data-theme="dark"] .slot-btn.occupied { background: repeating-linear-gradient(45deg, #2e2b1d, #2e2b1d 4px, #1e222b 4px, #1e222b 8px); }
+[data-theme="dark"] .notice { background: #3a2f10; border-color: #8a6d1c; color: #f0dfae; }
+[data-theme="dark"] .error-box { background: #471e1c; border-color: #7a3532; color: #f5b5b0; }
+[data-theme="dark"] .toast { background: #000; border: 1px solid var(--line); }
+[data-theme="dark"] .timer-bar { background: #1d3320; border-color: #3d6b44; }
+[data-theme="dark"] .block { border-color: rgba(255, 255, 255, 0.25); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4); }
+[data-theme="dark"] .create-preview { background: rgba(91, 141, 239, 0.25); }
+[data-theme="dark"] .today-row .swatch { border-color: rgba(255, 255, 255, 0.3); }
+
 /* ---------- V1/V2 additions ---------- */
 
 .modal.wide { width: min(860px, 100%); }
