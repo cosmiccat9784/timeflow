@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isAligned, snapToSlot, parseTimeInput, formatTime, isValidDuration } from "../time";
+import { isAligned, snapToSlot, parseTimeInput, formatTime, isValidDuration } from "./time";
 
 describe("15-minute grid engine (spec §4)", () => {
   it("accepts valid quarter-hour boundaries", () => {

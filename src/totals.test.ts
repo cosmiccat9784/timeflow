@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { Activity } from "../types";
-import { DEFAULT_CATEGORIES } from "../categories";
-import { dayTotals, unionMinutes } from "../totals";
+import type { Activity } from "./types";
+import { DEFAULT_CATEGORIES } from "./categories";
+import { dayTotals, unionMinutes } from "./totals";
 
 function act(id: string, cat: string, day: number, s: number, e: number): Activity {
   return {

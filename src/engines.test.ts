@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { Activity } from "../types";
-import { computeMergedBlocks } from "../merge";
-import { findConflicts, assignLanes } from "../conflicts";
-import { validateActivity } from "../validation";
-import { DEFAULT_CATEGORIES } from "../categories";
+import type { Activity } from "./types";
+import { computeMergedBlocks } from "./merge";
+import { findConflicts, assignLanes } from "./conflicts";
+import { validateActivity } from "./validation";
+import { DEFAULT_CATEGORIES } from "./categories";
 
 function act(partial: Partial<Activity> & { id: string }): Activity {
   return {
