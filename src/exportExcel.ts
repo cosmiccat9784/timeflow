@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import type { Activity, Category, Timetable, Weekday } from "./types";
+import type { Category, Timetable, Weekday } from "./types";
 import { WEEKDAY_NAMES } from "./types";
 import { allDayTotals } from "./totals";
 import { formatDuration } from "./time";

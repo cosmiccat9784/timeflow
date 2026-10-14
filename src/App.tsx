@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Activity, Category, GlobalSettings, PersistedState, RestorePoint, Weekday, WeekRecord } from "./types";
+import type { Activity, Category, GlobalSettings, PersistedState, RestorePoint, Timetable, Weekday, WeekRecord } from "./types";
 import { WEEKDAY_NAMES, WEEKDAY_SHORT, displayName, nowIso, uid } from "./types";
 import { DEFAULT_CATEGORIES } from "./categories";
-import { defaultCategoryForName } from "./categories";
 import { SLOT, formatDuration, formatTime } from "./time";
 import { validateActivity, validateCategories } from "./validation";
 import { UndoStack, type Snapshot } from "./undo";
@@ -878,9 +877,6 @@ export default function App() {
 
   const empty = activities.length === 0;
   const timer = state.activeTimer;
-  const timerActivity: Activity | null = timer
-    ? (timetables.flatMap((t) => t.activities).find((a) => a.id === timer.activityId) ?? null)
-    : null;
 
   return (
     <div className="app">

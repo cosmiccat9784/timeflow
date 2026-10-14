@@ -67,7 +67,6 @@ function csvToProposals(text: string, categories: Category[]): { proposals: Impo
       suggestedEnd: end !== null && end % 15 !== 0 ? Math.round(end / 15) * 15 : null,
     };
   });
-  const { proposals, warnings } = csvToProposals(text, categories);
   return { proposals, warnings };
 }
 

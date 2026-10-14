@@ -29,7 +29,6 @@ export function ProgressView({
   const subjPlanned = new Map<string, number>();
   const subjDone = new Map<string, number>();
   let optDone = 0;
-  let studyDoneMin = 0;
 
   for (const a of activities) {
     const c = record.completed[a.id];
