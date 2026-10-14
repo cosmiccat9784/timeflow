@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import type { Category, Weekday } from "./types";
+import type { Weekday } from "./types";
 import { defaultCategoryForName } from "./categories";
 
 // Excel import analyser — spec §16. Tuned against the real reference
@@ -124,7 +124,7 @@ function cellText(value: ExcelJS.CellValue): string {
   if (typeof value === "number") return String(value);
   if (value instanceof Date) return "";
   if (typeof value === "object") {
-    const v = value as Record<string, unknown>;
+    const v = value as unknown as Record<string, unknown>;
     if (Array.isArray(v.richText)) {
       return (v.richText as { text?: string }[]).map((r) => r.text ?? "").join("");
     }

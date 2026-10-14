@@ -1,4 +1,4 @@
-import type { Activity, Category, GlobalSettings, PersistedState, Timetable, Weekday } from "./types";
+import type { Category, GlobalSettings, PersistedState, Timetable, Weekday } from "./types";
 import { SCHEMA_VERSION, STORAGE_KEY, nowIso, uid } from "./types";
 import { DEFAULT_CATEGORIES, DEFAULT_SWITCH_PAIR, LEGACY_CATEGORY_NAMES } from "./categories";
 import { validateActivity, validateCategories } from "./validation";

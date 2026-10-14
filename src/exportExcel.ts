@@ -18,7 +18,7 @@ function label12(start: number, end: number): string {
     const h24 = Math.floor(m / 60) % 24;
     const ap = h24 < 12 ? "AM" : "PM";
     const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
-    return `${h12}:${String(m % 60).padStart(2, "0")}`;
+    return `${h12}:${String(m % 60).padStart(2, "0")} ${ap}`;
   };
   return `${f(start)} - ${f(end)}`;
 }
