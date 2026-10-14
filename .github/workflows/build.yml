@@ -1,0 +1,63 @@
+name: TimeFlow builds
+
+defaults:
+  run:
+    shell: bash
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # Unit tests run once on Linux (fast feedback for the scheduling engines).
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  # Platform packages build on native runners (§23.11 — no cross-OS packaging).
+  build:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: nsis
+          - os: macos-latest
+            target: dmg
+          - os: ubuntu-22.04
+
+line 37
+            target: appimage
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libfuse2
+      - run: npm ci
+      - run: npx tauri icon src-tauri/icons/icon.svg || true
+      - run: npm run tauri build
+      - name: Upload bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: timeflow-${{ runner.os }}
+          path: |
+            src-tauri/target/release/bundle/
