@@ -258,7 +258,7 @@ button { cursor: pointer; }
   border-radius: 8px;
   max-height: 300px;
   overflow: auto;
-  background: #fff;
+  background: var(--surface);
 }
 .slot-hour {
   display: flex;
@@ -278,7 +278,7 @@ button { cursor: pointer; }
   flex: 1;
   min-height: 36px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--surface);
   border-radius: 6px;
   font-size: 11px;
   color: var(--ink-soft);
