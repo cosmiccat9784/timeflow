@@ -74,6 +74,84 @@ function timeOptions(): number[] {
   return out;
 }
 
+/**
+ * Grid-based time picker for new activities: tap 15-minute squares to set
+ * the range (first tap sets start, second tap extends the end). Occupied
+ * squares are hatched but still selectable — overlaps stay allowed and are
+ * flagged by the conflict flow rather than silently blocked.
+ */
+function TimeRangePicker({
+  weekday,
+  start,
+  end,
+  activities,
+  clockFormat,
+  onPick,
+}: {
+  weekday: Weekday;
+  start: number;
+  end: number;
+  activities: Activity[];
+  clockFormat: ClockFormat;
+  onPick: (start: number, end: number) => void;
+}) {
+  const [anchor, setAnchor] = useState<number | null>(null);
+
+  useEffect(() => setAnchor(null), [weekday]);
+
+  const occupied = useMemo(() => {
+    const set = new Set<number>();
+    for (const a of activities) {
+      if (a.weekday !== weekday) continue;
+      for (let t = a.startTime; t < a.endTime; t += 15) set.add(t);
+    }
+    return set;
+  }, [activities, weekday]);
+
+  const tap = (t: number) => {
+    const a = anchor;
+    if (a === null || t < a) {
+      setAnchor(t);
+      onPick(t, Math.min(t + 15, 1440));
+    } else {
+      onPick(a, Math.min(t + 15, 1440));
+    }
+  };
+
+  const hours: number[] = [];
+  for (let h = 0; h < 24; h++) hours.push(h);
+
+  return (
+    <div className="slot-picker" role="group" aria-label="Choose start and end time on the grid">
+      {hours.map((h) => (
+        <div key={h} className="slot-hour">
+          <span className="slot-hour-label" aria-hidden="true">{formatTime(h * 60, clockFormat)}</span>
+          <div className="slot-btns">
+            {[0, 1, 2, 3].map((q) => {
+              const t = h * 60 + q * 15;
+              const selected = t >= start && t < end;
+              const busy = occupied.has(t);
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  className={`slot-btn${busy ? " occupied" : ""}`}
+                  aria-pressed={selected}
+                  aria-label={`${formatTime(t, clockFormat)}${busy ? ", overlaps an existing activity" : ""}${selected ? ", selected" : ""}`}
+                  title={formatTime(t, clockFormat)}
+                  onClick={() => tap(t)}
+                >
+                  :{String(q * 15).padStart(2, "0")}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** Full activity editor — spec §6.3. All edits validated before commit. */
 export function ActivityEditor({
   initial,
@@ -197,24 +275,38 @@ export function ActivityEditor({
             </select>
           </div>
         </div>
-        <div className="form-row">
+        {d.activityId === null ? (
           <div className="field">
-            <label htmlFor="ed-start">Start (15-min steps)</label>
-            <select id="ed-start" value={d.startTime} onChange={(e) => set("startTime", Number(e.target.value))}>
-              {timeOptions().map((t) => (
-                <option key={t} value={t}>{formatTime(t, clockFormat)}</option>
-              ))}
-            </select>
+            <label id="ed-grid-label">Time — tap a square to set the start, tap another to extend the end</label>
+            <TimeRangePicker
+              weekday={d.weekday}
+              start={d.startTime}
+              end={d.endTime}
+              activities={activities}
+              clockFormat={clockFormat}
+              onPick={(startTime, endTime) => setD((prev) => ({ ...prev, startTime, endTime }))}
+            />
           </div>
-          <div className="field">
-            <label htmlFor="ed-end">End (15-min steps)</label>
-            <select id="ed-end" value={d.endTime} onChange={(e) => set("endTime", Number(e.target.value))}>
-              {timeOptions().map((t) => (
-                <option key={t} value={t}>{formatTime(t, clockFormat)}</option>
-              ))}
-            </select>
+        ) : (
+          <div className="form-row">
+            <div className="field">
+              <label htmlFor="ed-start">Start (15-min steps)</label>
+              <select id="ed-start" value={d.startTime} onChange={(e) => set("startTime", Number(e.target.value))}>
+                {timeOptions().map((t) => (
+                  <option key={t} value={t}>{formatTime(t, clockFormat)}</option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="ed-end">End (15-min steps)</label>
+              <select id="ed-end" value={d.endTime} onChange={(e) => set("endTime", Number(e.target.value))}>
+                {timeOptions().map((t) => (
+                  <option key={t} value={t}>{formatTime(t, clockFormat)}</option>
+                ))}
+              </select>
+            </div>
           </div>
-        </div>
+        )}
         <p className="derived" aria-live="polite">
           Duration: {duration >= 0 ? `${Math.floor(duration / 60)}h ${duration % 60}m` : "—"}
           {previewErrors.length > 0 && ` — ⚠ ${previewErrors[0].message}`}

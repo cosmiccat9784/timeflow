@@ -11,6 +11,7 @@ export function defaultSettings(): GlobalSettings {
     visibleEndMinutes: 1320,
     clockFormat: "12h",
     switchPair: [...DEFAULT_SWITCH_PAIR] as [string, string],
+    showToasts: true,
     appVersion: APP_VERSION,
   };
 }
@@ -43,6 +44,8 @@ export function migrateState(raw: unknown): PersistedState | null {
         // Too broken to trust wholesale — fall back to defaults for categories
         s.categories = DEFAULT_CATEGORIES.map((c) => ({ ...c }));
       }
+      // Forward-fill settings added in later versions.
+      if (typeof s.settings.showToasts !== "boolean") s.settings.showToasts = true;
       return sanitizeState(s);
     }
     // v0 (pre-release, no schemaVersion): best-effort upgrade

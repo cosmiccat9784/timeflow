@@ -11,8 +11,8 @@ import { assignLanes, conflictsForCandidate, findConflicts } from "./conflicts";
 import { allDayTotals, weekTotals } from "./totals";
 import { loadState, saveState, weekdayToday, minutesNow } from "./store";
 import { sampleActivities } from "./sample";
-import { PlannerGrid, type MenuRequest } from "./components/PlannerGrid";
-import { CategoryMenu } from "./components/CategoryMenu";
+import { PlannerGrid, type EmptySlotRequest, type MenuRequest } from "./components/PlannerGrid";
+import { CategoryMenu, EmptyMenu } from "./components/CategoryMenu";
 import { ActivityEditor, draftFromActivity, type EditorDraft } from "./components/ActivityEditor";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { EmptyState } from "./components/EmptyState";
@@ -48,6 +48,7 @@ export default function App() {
   const [toast, setToast] = useState<ToastData | null>(null);
   const [announce, setAnnounce] = useState("");
   const [pending, setPending] = useState<PendingOp | null>(null);
+  const [emptyMenu, setEmptyMenu] = useState<{ x: number; y: number; day: Weekday; start: number } | null>(null);
   const [swapFrom, setSwapFrom] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<{ kind: "saved" | "saving" | "error"; text: string }>({ kind: "saved", text: "Saved" });
   const [hintUsed, setHintUsed] = useState(false);
@@ -132,6 +133,13 @@ export default function App() {
 
   const say = (msg: string) => setAnnounce(msg);
 
+  // Routine success toasts respect the Settings toggle; errors always show.
+  const showToastsRef = useRef(settings.showToasts);
+  showToastsRef.current = settings.showToasts;
+  const notify = useCallback((t: ToastData) => {
+    if (showToastsRef.current) setToast(t);
+  }, []);
+
   // ---------- commit pipeline (atomic, validated, undoable) ----------
 
   /** Direct commit after validation. Returns error message or null. */
@@ -162,7 +170,7 @@ export default function App() {
     if (hit.length === 0) {
       const err = commit(next, label);
       if (err) setToast({ message: err });
-      else setToast({ message: label, undoLabel: "Undo", onUndo: doUndo });
+      else notify({ message: label, undoLabel: "Undo", onUndo: doUndo });
     } else {
       setPending({ label, next, conflicts: describeConflicts(hit) });
     }
@@ -219,7 +227,7 @@ export default function App() {
     if (err) setToast({ message: err });
     else {
       lastCategory.current = other;
-      setToast({ message: "Switched. ", undoLabel: "Undo", onUndo: doUndo });
+      notify({ message: "Switched. ", undoLabel: "Undo", onUndo: doUndo });
     }
   };
 
@@ -242,7 +250,7 @@ export default function App() {
     if (err) setToast({ message: err });
     else {
       if (selectedKey === block.key) setSelectedKey(null);
-      setToast({ message: "Deleted. ", undoLabel: "Undo", onUndo: doUndo });
+      notify({ message: "Deleted. ", undoLabel: "Undo", onUndo: doUndo });
     }
   };
 
@@ -343,7 +351,7 @@ export default function App() {
       setPending({ label: `Swapped ${am.name} and ${bm.name}`, next, conflicts: describeConflicts(hit) });
     } else {
       const err = commit(next, `Swapped ${am.name} and ${bm.name}`);
-      setToast(err ? { message: err } : { message: "Swapped. ", undoLabel: "Undo", onUndo: doUndo });
+      notify(err ? { message: err } : { message: "Swapped. ", undoLabel: "Undo", onUndo: doUndo });
     }
     setSwapFrom(null);
   };
@@ -401,13 +409,13 @@ export default function App() {
   const createSample = () => {
     const err = commit(sampleActivities(), "Created sample timetable");
     if (err) setToast({ message: err });
-    else setToast({ message: "Sample timetable created. ", undoLabel: "Undo", onUndo: doUndo });
+    else notify({ message: "Sample timetable created. ", undoLabel: "Undo", onUndo: doUndo });
   };
 
   const clearAll = () => {
     const err = commit([], "Removed all activities");
     if (err) setToast({ message: err });
-    else setToast({ message: "Removed all activities. ", undoLabel: "Undo", onUndo: doUndo });
+    else notify({ message: "Removed all activities. ", undoLabel: "Undo", onUndo: doUndo });
     setSettingsOpen(false);
   };
 
@@ -568,6 +576,7 @@ export default function App() {
                 }
               }}
               onOpenMenu={(m) => { setMenu(m); setSelectedKey(m.block.key); }}
+              onEmptyMenu={(m: EmptySlotRequest) => setEmptyMenu(m)}
               onCreate={openCreate}
               onCommitMove={moveBlock}
               onCommitResize={resizeBlock}
@@ -602,6 +611,21 @@ export default function App() {
         />
       )}
 
+      {emptyMenu && (
+        <EmptyMenu
+          x={emptyMenu.x}
+          y={emptyMenu.y}
+          day={emptyMenu.day}
+          timeLabel={formatTime(emptyMenu.start, settings.clockFormat)}
+          onNew={() => {
+            const { day, start } = emptyMenu;
+            setEmptyMenu(null);
+            openCreate(day, start, Math.min(start + 60, 1440));
+          }}
+          onClose={() => setEmptyMenu(null)}
+        />
+      )}
+
       {editor && (
         <ActivityEditor
           initial={editor}
@@ -618,7 +642,7 @@ export default function App() {
             setEditor(null);
             if (found) {
               const err = commit(activities.filter((a) => a.id !== id), `Deleted ${found.name}`);
-              setToast(err ? { message: err } : { message: "Deleted. ", undoLabel: "Undo", onUndo: doUndo });
+              notify(err ? { message: err } : { message: "Deleted. ", undoLabel: "Undo", onUndo: doUndo });
             }
           } : undefined}
           onDuplicate={editor.activityId ? () => {
@@ -650,7 +674,7 @@ export default function App() {
                 onClick={() => {
                   const err = commit(pending.next, pending.label);
                   setPending(null);
-                  setToast(err ? { message: err } : { message: `${pending.label} (kept overlap visible).`, undoLabel: "Undo", onUndo: doUndo });
+                  notify(err ? { message: err } : { message: `${pending.label} (kept overlap visible).`, undoLabel: "Undo", onUndo: doUndo });
                 }}
               >
                 Move anyway

@@ -16,6 +16,13 @@ export interface MenuRequest {
   block: MergedBlock;
 }
 
+export interface EmptySlotRequest {
+  x: number;
+  y: number;
+  day: Weekday;
+  start: number;
+}
+
 interface PreviewMove { kind: "move"; day: Weekday; start: number }
 interface PreviewResize { kind: "resize"; edge: "top" | "bottom"; time: number }
 interface PreviewCreate { kind: "create"; day: Weekday; start: number; end: number }
@@ -53,6 +60,7 @@ export function PlannerGrid({
   onQuickSwitch,
   onSelectBlock,
   onOpenMenu,
+  onEmptyMenu,
   onCreate,
   onCommitMove,
   onCommitResize,
@@ -79,6 +87,7 @@ export function PlannerGrid({
   onQuickSwitch: (block: MergedBlock) => void;
   onSelectBlock: (key: string | null) => void;
   onOpenMenu: (m: MenuRequest) => void;
+  onEmptyMenu: (m: EmptySlotRequest) => void;
   onCreate: (day: Weekday, start: number, end: number) => void;
   onCommitMove: (blockKey: string, day: Weekday, start: number) => void;
   onCommitResize: (blockKey: string, edge: "top" | "bottom", time: number) => void;
@@ -150,6 +159,11 @@ export function PlannerGrid({
     onOpenMenu({ x: Math.min(clientX, window.innerWidth - 260), y: Math.min(clientY, window.innerHeight - 320), block });
   };
 
+  const fireEmptyMenu = (clientX: number, clientY: number, day: Weekday, start: number) => {
+    if (press.current) press.current.menuFired = true;
+    onEmptyMenu({ x: Math.min(clientX, window.innerWidth - 260), y: Math.min(clientY, window.innerHeight - 140), day, start });
+  };
+
   // ---------- pointer handlers (delegated on container) ----------
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -195,6 +209,14 @@ export function PlannerGrid({
         startX: e.clientX, startY: e.clientY, downAt: Date.now(),
         moved: false, dragging: false, grabOffset: 0, menuFired: false,
       };
+      // Long-press on empty time opens the New-activity menu (§9.1).
+      const cx = e.clientX;
+      const cy = e.clientY;
+      press.current.timer = setTimeout(() => {
+        if (press.current && !press.current.moved && !press.current.menuFired) {
+          fireEmptyMenu(cx, cy, day, start);
+        }
+      }, LONG_PRESS_MS);
     }
   };
 
@@ -286,7 +308,19 @@ export function PlannerGrid({
 
   const onContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
     const blockEl = (e.target as HTMLElement).closest<HTMLElement>("[data-block]");
-    if (!blockEl) return;
+    if (!blockEl) {
+      // Right-click on empty time offers creation directly.
+      const colEl = (e.target as HTMLElement).closest<HTMLElement>("[data-day]");
+      if (!colEl) return;
+      e.preventDefault();
+      const day = Number(colEl.dataset.day) as Weekday;
+      const start = clampDay(snapToSlot(minutesAtClientY(day, e.clientY)));
+      clearTimer();
+      press.current = null;
+      setPreview(null);
+      fireEmptyMenu(e.clientX, e.clientY, day, start);
+      return;
+    }
     e.preventDefault();
     const block = blockByKey.get(blockEl.dataset.block!);
     if (block) {

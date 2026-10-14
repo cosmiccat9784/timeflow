@@ -252,6 +252,51 @@ button { cursor: pointer; }
 .notice { background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; font-size: 13px; }
 .error-box { background: #fdecea; border: 1px solid #efc9c9; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; color: var(--danger); font-weight: 600; }
 
+/* New-activity grid time picker */
+.slot-picker {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  max-height: 300px;
+  overflow: auto;
+  background: #fff;
+}
+.slot-hour {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-bottom: 1px solid var(--grid-line);
+}
+.slot-hour-label {
+  flex: 0 0 64px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.slot-btns { display: flex; gap: 4px; flex: 1; }
+.slot-btn {
+  flex: 1;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--ink-soft);
+  padding: 4px 2px;
+}
+.slot-btn[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+.slot-btn.occupied {
+  background: repeating-linear-gradient(45deg, #f3ede0, #f3ede0 4px, #fff 4px, #fff 8px);
+}
+.slot-btn.occupied[aria-pressed="true"] {
+  background: var(--accent);
+}
+
 /* Toast */
 .toast {
   position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);

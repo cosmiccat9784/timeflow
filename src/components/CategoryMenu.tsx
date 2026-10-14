@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import type { Category } from "../types";
+import type { Category, Weekday } from "../types";
+import { WEEKDAY_NAMES } from "../types";
 import type { MergedBlock } from "../merge";
 
 export interface MenuState {
@@ -101,6 +102,65 @@ export function CategoryMenu({
       <button type="button" role="menuitem" onClick={onDuplicate}>⧉ Duplicate</button>
       <button type="button" role="menuitem" onClick={onSwap}>⇄ Swap with another…</button>
       <button type="button" role="menuitem" onClick={onDelete}>🗑 Delete</button>
+    </div>
+  );
+}
+
+/** Right-click / long-press on empty time: create here. */
+export function EmptyMenu({
+  x,
+  y,
+  day,
+  timeLabel,
+  onNew,
+  onClose,
+}: {
+  x: number;
+  y: number;
+  day: Weekday;
+  timeLabel: string;
+  onNew: () => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    let dx = 0;
+    let dy = 0;
+    if (r.right > window.innerWidth - 8) dx = window.innerWidth - 8 - r.right;
+    if (r.bottom > window.innerHeight - 8) dy = window.innerHeight - 8 - r.bottom;
+    if (dx !== 0 || dy !== 0) el.style.transform = `translate(${dx}px, ${dy}px)`;
+    el.querySelector<HTMLButtonElement>("button")?.focus();
+  }, []);
+
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      className="menu"
+      role="menu"
+      aria-label={`Actions for empty time on ${WEEKDAY_NAMES[day]}`}
+      style={{ left: x, top: y }}
+    >
+      <h4>{WEEKDAY_NAMES[day]} · {timeLabel}</h4>
+      <button type="button" role="menuitem" onClick={onNew}>＋ New activity here</button>
     </div>
   );
 }

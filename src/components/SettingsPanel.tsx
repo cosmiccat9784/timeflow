@@ -93,6 +93,18 @@ export function SettingsPanel({
         </div>
 
         <div className="settings-row">
+          <label htmlFor="set-toasts">Confirmation popups</label>
+          <input
+            id="set-toasts"
+            type="checkbox"
+            checked={settings.showToasts}
+            onChange={(e) => onChange({ ...settings, showToasts: e.target.checked })}
+            style={{ width: 22, height: 22 }}
+          />
+        </div>
+        <p className="derived">When off, routine notes (Switched, Deleted…) stay silent. Errors always show, and Undo stays on ↩ / Ctrl+Z.</p>
+
+        <div className="settings-row">
           <span>TimeFlow version</span>
           <span>{APP_VERSION} · schema v1 · English (Australia), week starts Monday</span>
         </div>

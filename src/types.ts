@@ -67,6 +67,8 @@ export interface GlobalSettings {
   clockFormat: ClockFormat;
   /** quick-switch pair, default [study, personal] */
   switchPair: [string, string];
+  /** routine confirmation toasts (Switched, Deleted…); errors always show */
+  showToasts: boolean;
   appVersion: string;
 }
 
