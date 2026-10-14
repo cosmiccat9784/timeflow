@@ -2,13 +2,12 @@
 
 Tauri 2 desktop app (Windows, macOS, Linux) for planning a **repeating
 Monday-to-Sunday timetable** in 15-minute blocks. Editing feels immediate and
-visual: click Study ↔ Personal to switch instantly, drag to move, resize from
-the edges, right-click / long-press for every category.
+visual: click to select, double-click Study ↔ Personal to switch, drag to move,
+resize from the edges, right-click / long-press for every category.
 
 > Full product specification: see the handover document (TimeFlow product
-> spec, §§1–31). This repo implements **MVP** completely and carries the
-> architectural foundations for **V1** (Excel/CSV import-export, JSON backup,
-> categories, multiple timetables) and **V2** (timers, reminders, progress).
+> spec, §§1–31). This repo implements **MVP + V1 + V2** (version 0.2.0).
+> Owner-directed deviations from the spec are listed under “Deviations” below.
 
 ## MVP feature checklist
 
@@ -115,23 +114,46 @@ src-tauri/
 - **Totals** use interval unions so overlaps count once (§12.3).
 - **Storage**: `localStorage` key `timeflow.v1.state` works in dev browsers
   *and* the Tauri webview (per-user data dir, survives restart/upgrade).
-  `tauri-plugin-store` is wired for the V1 move to file-backed settings/backups;
-  schema migrations keep a rescue copy of corrupt payloads (§13.9).
+  Schema v2 holds multiple timetables, categories, settings, week records,
+  restore points and the running timer; v1 states migrate losslessly with a
+  rescue copy of corrupt payloads (§13.9).
+- **Excel**: `exceljs` reads fills/merges for import and writes styled
+  workbooks for export (SheetJS CE cannot write styles).
 
-## Roadmap (kept, not dropped — §2)
+## V1 — import, export, management (done, 0.2.0)
 
-- **V1**: Excel/CSV import with guided preview (§16), XLSX/CSV export + JSON
-  backup (§17), category management (§7.6), multiple timetables (§18).
-  Stubs: `test_notification`/`app_version` commands, reminder prefs stored per
-  activity, `subjects` list, `switchPair` setting.
-- **V2**: completion, timer, reminders/quiet hours, today/progress dashboards,
-  Sunday-midnight rollover (§§19–22). Reminder prefs + lead times are already
-  stored so V2 scheduling has the data it needs.
+- [x] Excel import tuned to the real reference workbook (weekday/weekend sections, repeated-cell runs, legend fills, summary exclusion, fuzzy days, PM assumption flagged)
+- [x] CSV import into the same guided preview
+- [x] Guided flow: file → sheet → preview/correct (invalid times need explicit fix or exclusion) → replace/merge/new-timetable
+- [x] Restore point before every import; undoable; overlaps kept as flagged conflicts
+- [x] XLSX export (familiar grid, fills, merges, legend, union totals), CSV export, JSON backup/restore with validation
+- [x] Category manager: add/rename/recolour/re-icon/counting, delete with mandatory replacement
+- [x] Multiple named timetables (create/rename/delete/switch, shared categories+settings)
+
+## V2 — tracking, reminders, progress (done, 0.2.0)
+
+- [x] Explicit completion per activity (current week only)
+- [x] Study timer: start/pause/resume/finish/+15/skip, timestamp-persisted across restarts, no double-counting
+- [x] Reminders: start/end/at-end with lead times, quiet hours, in-app banner + native notification attempt, duplicate-proof keys, test button
+- [x] Today dashboard (now/next/timeline/totals) and Progress dashboard (planned vs recorded, by day/subject)
+- [x] Sunday-midnight rollover: recap modal with CSV download, then only week records clear — template untouched
+
+## Deviations (owner-directed, override the spec)
+
+- **Click selects; double-click switches.** Spec §7.3/§9.1 single-click switching
+  moved to double-click (keyboard: Enter edits, S switches) to stop accidental
+  changes. One-gesture switching is preserved.
+- **Names optional.** Spec §6.4 required names; blank activities display their
+  category instead.
+- **Simpler default labels.** Sport / Study / Work / Meals / Extracurricular
+  instead of the longer §7.2 names. Stored timetables adopt them only where the
+  user never renamed the category.
 
 ## Acceptance tests
 
 - Unit: `npm test` covers Tests 4–5 (alignment/minimum), 11–12 (merge/split),
-  14 (overlap+lanes), 15–17 (totals incl. union + override), 26 (validation).
+  14 (overlap+lanes), 15–17 (totals incl. union + override), 26 (validation),
+  plus reference-workbook label parsing and CSV round-trips.
 - Manual: follow spec §28.1 Tests 1–26 in the running app (empty state →
   sample → create → switch → undo → menu → edit/delete → merge → move/resize →
   overlap → totals → restart → failed-write → keyboard → responsive → offline →

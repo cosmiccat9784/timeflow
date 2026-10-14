@@ -56,7 +56,8 @@ export function PlannerGrid({
   lanesByDay,
   dayMinutes,
   swapArmed,
-  hintShown,
+  completedIds,
+  timerActivityId,
   onQuickSwitch,
   onSelectBlock,
   onOpenMenu,
@@ -68,7 +69,6 @@ export function PlannerGrid({
   onDeleteBlock,
   onSwapTarget,
   onChangeDay,
-  onHintUsed,
 }: {
   blocks: MergedBlock[];
   categories: Category[];
@@ -83,7 +83,8 @@ export function PlannerGrid({
   lanesByDay: Map<number, Map<string, { lane: number; lanes: number }>>;
   dayMinutes: Record<number, { study: number; optionalWork: number }>;
   swapArmed: boolean;
-  hintShown: boolean;
+  completedIds: Set<string>;
+  timerActivityId: string | null;
   onQuickSwitch: (block: MergedBlock) => void;
   onSelectBlock: (key: string | null) => void;
   onOpenMenu: (m: MenuRequest) => void;
@@ -95,7 +96,6 @@ export function PlannerGrid({
   onDeleteBlock: (block: MergedBlock) => void;
   onSwapTarget: (block: MergedBlock) => void;
   onChangeDay: (day: Weekday) => void;
-  onHintUsed: () => void;
 }) {
   const visStart = settings.visibleStartMinutes;
   const visEnd = settings.visibleEndMinutes;
@@ -106,6 +106,7 @@ export function PlannerGrid({
   const colRefs = useRef(new Map<number, HTMLDivElement>());
   const [preview, setPreview] = useState<Preview>(null);
   const [kbMove, setKbMove] = useState<{ key: string; day: Weekday; start: number } | null>(null);
+  const lastTap = useRef<{ key: string; at: number } | null>(null);
   const press = useRef<{
     kind: "empty" | "block";
     day: Weekday;
@@ -291,18 +292,19 @@ export function PlannerGrid({
     }
     setPreview(null);
     if (p.moved) return; // drag that snapped back — no click action.
-    // Single click / tap (§9.1).
+    // Single click / tap selects. Double-click switches the pair (§7.3).
     if (swapArmed) {
       onSwapTarget(block);
       return;
     }
-    if (inSwitchPair(block, settings)) {
-      onQuickSwitch(block);
+    const now = Date.now();
+    if (lastTap.current?.key === block.key && now - lastTap.current.at < 400) {
+      lastTap.current = null;
+      if (inSwitchPair(block, settings)) onQuickSwitch(block);
+      else onSelectBlock(block.key);
     } else {
+      lastTap.current = { key: block.key, at: now };
       onSelectBlock(block.key);
-      if (!hintShown) {
-        onHintUsed();
-      }
     }
   };
 
@@ -359,8 +361,13 @@ export function PlannerGrid({
       case "Enter":
         e.preventDefault();
         if (swapArmed) onSwapTarget(block);
-        else if (inSwitchPair(block, settings)) onQuickSwitch(block);
         else onEditBlock(block);
+        break;
+      case "s":
+      case "S":
+        // Keyboard quick-switch for the configured pair.
+        e.preventDefault();
+        if (!swapArmed && inSwitchPair(block, settings)) onQuickSwitch(block);
         break;
       case "Delete":
       case "Backspace":
@@ -425,12 +432,14 @@ export function PlannerGrid({
     const widthPct = lanes ? 100 / lanes.lanes : 100;
     const leftPct = lanes ? (lanes.lane * 100) / lanes.lanes : 0;
     const hasConflict = b.members.some((m) => conflictIds.has(m.id));
+    const isDone = b.members.every((m) => completedIds.has(m.id));
+    const hasTimer = b.members.some((m) => m.id === timerActivityId);
     const isSelected = selectedBlockKey === b.key || kbMove?.key === b.key;
     return (
       <div
         key={b.key}
         data-block={b.key}
-        className={`block${b.members.length > 1 ? " merged" : ""}${hasConflict ? " conflict" : ""}${isSelected ? " selected" : ""}`}
+        className={`block${b.members.length > 1 ? " merged" : ""}${hasConflict ? " conflict" : ""}${isSelected ? " selected" : ""}${isDone ? " done" : ""}`}
         style={{
           top,
           height: h,
@@ -446,12 +455,14 @@ export function PlannerGrid({
           type="button"
           data-focus-target
           onKeyDown={(e) => onBlockKeyDown(e, b, blocksByDay.get(b.weekday)?.findIndex((x) => x.key === b.key) ?? 0)}
-          aria-label={`${label}. Press Enter to ${inSwitchPair(b, settings) ? "switch category" : "edit"}. Press M to move with keyboard.`}
+          aria-label={`${label}. Press Enter to edit. Press S to switch category. Press M to move with keyboard.`}
           style={{ all: "unset", display: "block", width: "100%", cursor: "pointer", touchAction: "none" } as React.CSSProperties}
         >
           <span className="bname">
             <span className="bicon" aria-hidden="true">{cat?.icon}</span>
             {label}
+            {isDone && <span className="done-badge" title="Marked complete">✓</span>}
+            {hasTimer && <span className="done-badge" title="Timer running">⏱</span>}
             {hasConflict && <span className="conflict-dot" title="Scheduling conflict">⚠ overlap</span>}
           </span>
           {h > 34 && (

@@ -1,9 +1,9 @@
-import type { Activity, GlobalSettings, PersistedState, Timetable, Weekday } from "./types";
+import type { Activity, Category, GlobalSettings, PersistedState, Timetable, Weekday } from "./types";
 import { SCHEMA_VERSION, STORAGE_KEY, nowIso, uid } from "./types";
 import { DEFAULT_CATEGORIES, DEFAULT_SWITCH_PAIR, LEGACY_CATEGORY_NAMES } from "./categories";
 import { validateActivity, validateCategories } from "./validation";
 
-export const APP_VERSION = "0.1.0";
+export const APP_VERSION = "0.2.0";
 
 export function defaultSettings(): GlobalSettings {
   return {
@@ -12,23 +12,54 @@ export function defaultSettings(): GlobalSettings {
     clockFormat: "12h",
     switchPair: [...DEFAULT_SWITCH_PAIR] as [string, string],
     showToasts: true,
+    quietHours: { start: 1320, end: 420 }, // 10pm–7am default
+    reminderDefaults: { startLead: 5, endLead: 5, atEnd: true },
+    lastRolloverWeekId: null,
     appVersion: APP_VERSION,
   };
 }
 
-export function defaultTimetable(): Timetable {
-  return { id: uid("tt"), name: "My Week", activities: [] };
+export function defaultTimetable(name = "My Week"): Timetable {
+  return { id: uid("tt"), name, activities: [] };
 }
 
 export function defaultState(): PersistedState {
+  const tt = defaultTimetable();
   return {
     schemaVersion: SCHEMA_VERSION,
-    timetable: defaultTimetable(),
+    timetables: [tt],
+    activeTimetableId: tt.id,
     categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })),
     settings: defaultSettings(),
     subjects: ["Mathematics", "English", "Piano"],
+    weekRecords: {},
+    restorePoints: [],
+    activeTimer: null,
     savedAt: nowIso(),
   };
+}
+
+function fillSettings(s: Partial<GlobalSettings> | undefined): GlobalSettings {
+  const d = defaultSettings();
+  const merged: GlobalSettings = { ...d, ...(s ?? {}) };
+  if (!Array.isArray(merged.switchPair) || merged.switchPair.length !== 2)
+    merged.switchPair = [...DEFAULT_SWITCH_PAIR] as [string, string];
+  if (typeof merged.showToasts !== "boolean") merged.showToasts = true;
+  if (!merged.quietHours || typeof merged.quietHours !== "object")
+    merged.quietHours = { ...d.quietHours };
+  if (!merged.reminderDefaults || typeof merged.reminderDefaults !== "object")
+    merged.reminderDefaults = { ...d.reminderDefaults };
+  return merged;
+}
+
+function adoptSimpleLabels(categories: Category[]): Category[] {
+  return categories.map((c) => {
+    if (LEGACY_CATEGORY_NAMES[c.id] === c.name) {
+      const fresh = DEFAULT_CATEGORIES.find((x) => x.id === c.id);
+      if (fresh) return { ...c, name: fresh.name };
+    }
+    return c;
+  });
 }
 
 /** Migrate older schemas → current. Never destroys last valid data (§13.9). */
@@ -38,32 +69,35 @@ export function migrateState(raw: unknown): PersistedState | null {
   try {
     if (r.schemaVersion === SCHEMA_VERSION) {
       const s = r as unknown as PersistedState;
-      if (!Array.isArray(s.timetable?.activities)) return null;
+      if (!Array.isArray(s.timetables) || s.timetables.length === 0) return null;
       if (!Array.isArray(s.categories)) return null;
       if (validateCategories(s.categories).length > 3) {
-        // Too broken to trust wholesale — fall back to defaults for categories
         s.categories = DEFAULT_CATEGORIES.map((c) => ({ ...c }));
+      } else {
+        s.categories = adoptSimpleLabels(s.categories);
       }
-      // Forward-fill settings added in later versions.
-      if (typeof s.settings.showToasts !== "boolean") s.settings.showToasts = true;
-      // Adopt simplified default category labels, but only where the user
-      // never renamed the category themselves.
-      for (const c of s.categories) {
-        if (LEGACY_CATEGORY_NAMES[c.id] === c.name) {
-          const fresh = DEFAULT_CATEGORIES.find((d) => d.id === c.id);
-          if (fresh) c.name = fresh.name;
-        }
-      }
+      s.settings = fillSettings(s.settings);
+      if (!Array.isArray(s.subjects)) s.subjects = [];
+      if (typeof s.weekRecords !== "object" || s.weekRecords === null) s.weekRecords = {};
+      if (!Array.isArray(s.restorePoints)) s.restorePoints = [];
+      if (!s.timetables.some((t) => t.id === s.activeTimetableId))
+        s.activeTimetableId = s.timetables[0].id;
       return sanitizeState(s);
     }
-    // v0 (pre-release, no schemaVersion): best-effort upgrade
-    if (r.schemaVersion === undefined && Array.isArray((r as { activities?: unknown }).activities)) {
-      const legacy = r as { activities: Activity[] };
+    // v1 → v2: wrap the single timetable, add records/restore/timer fields.
+    if (r.schemaVersion === 1) {
+      const v1 = r as unknown as {
+        timetable?: Timetable; categories?: Category[]; settings?: Partial<GlobalSettings>; subjects?: string[]
+      };
+      if (!v1.timetable || !Array.isArray(v1.timetable.activities)) return null;
       const s = defaultState();
-      s.timetable.activities = legacy.activities.filter(
-        (a) => validateActivity(a, s.categories).length === 0,
-      );
-      return s;
+      s.timetables = [{ ...v1.timetable }];
+      s.activeTimetableId = s.timetables[0].id;
+      if (Array.isArray(v1.categories) && validateCategories(v1.categories).length <= 3)
+        s.categories = adoptSimpleLabels(v1.categories);
+      s.settings = fillSettings(v1.settings);
+      if (Array.isArray(v1.subjects)) s.subjects = v1.subjects;
+      return sanitizeState(s);
     }
     return null;
   } catch {
@@ -72,9 +106,11 @@ export function migrateState(raw: unknown): PersistedState | null {
 }
 
 export function sanitizeState(s: PersistedState): PersistedState {
-  s.timetable.activities = s.timetable.activities.filter(
-    (a) => validateActivity(a, s.categories).length === 0,
-  );
+  for (const t of s.timetables) {
+    t.activities = t.activities.filter(
+      (a) => validateActivity(a, s.categories).length === 0,
+    );
+  }
   return s;
 }
 

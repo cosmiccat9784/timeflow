@@ -1,7 +1,8 @@
-// TimeFlow data model — see spec §13.
+// TimeFlow data model — spec §13.
+// Schema v2: multiple timetables, week records, restore points, timer.
 // Stable IDs + explicit schema version. Duration is derived, never stored.
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 export const STORAGE_KEY = "timeflow.v1.state";
 
 /** Monday = 0 … Sunday = 6 (ISO-style, Monday-first per §3.5). */
@@ -22,7 +23,7 @@ export interface Category {
   id: string;
   name: string;
   colour: string; // hex background
-  icon: string; // emoji / glyph (MVP); V1 allows custom icon sets
+  icon: string; // emoji / glyph
   countsTowardStudy: boolean;
   countsTowardOptionalWork: boolean;
 }
@@ -39,7 +40,7 @@ export interface ReminderPreferences {
 
 export interface Activity {
   id: string;
-  name: string;
+  name: string; // optional: blank displays the category name
   categoryId: string;
   subject?: string;
   weekday: Weekday;
@@ -59,7 +60,45 @@ export interface Timetable {
   activities: Activity[];
 }
 
+/** V2 week-specific record — separate from the repeating template (§13.6). */
+export interface WeekRecord {
+  timetableId: string;
+  weekId: string; // yyyy-mm-dd of the week's Monday (local)
+  completed: Record<string, { done: boolean; minutes: number }>;
+  delivered: string[]; // fired reminder keys (duplicate prevention §21.4)
+}
+
+/** V2 persisted timer session (§20.4). Elapsed derives from timestamps. */
+export interface TimerState {
+  timetableId: string;
+  activityId: string;
+  startedAtEpochMs: number;
+  accumulatedSec: number;
+  running: boolean;
+  targetSec: number;
+}
+
+/** V1 restore point before destructive operations (§16.3, §11.1). */
+export interface RestorePoint {
+  id: string;
+  label: string;
+  at: string;
+  timetables: Timetable[];
+  categories: Category[];
+}
+
 export type ClockFormat = "12h" | "24h";
+
+export interface QuietHours {
+  start: number | null; // minutes from midnight, null = off
+  end: number | null;
+}
+
+export interface ReminderDefaults {
+  startLead: number;
+  endLead: number;
+  atEnd: boolean;
+}
 
 export interface GlobalSettings {
   visibleStartMinutes: number; // default 360 (06:00)
@@ -69,15 +108,22 @@ export interface GlobalSettings {
   switchPair: [string, string];
   /** routine confirmation toasts (Switched, Deleted…); errors always show */
   showToasts: boolean;
+  quietHours: QuietHours;
+  reminderDefaults: ReminderDefaults;
+  lastRolloverWeekId: string | null;
   appVersion: string;
 }
 
 export interface PersistedState {
   schemaVersion: number;
-  timetable: Timetable;
+  timetables: Timetable[];
+  activeTimetableId: string;
   categories: Category[];
   settings: GlobalSettings;
   subjects: string[];
+  weekRecords: Record<string, WeekRecord>;
+  restorePoints: RestorePoint[];
+  activeTimer: TimerState | null;
   savedAt: string;
 }
 
@@ -99,6 +145,7 @@ export function displayName(
   if (n) return n;
   return categories.find((c) => c.id === activity.categoryId)?.name ?? "Untitled";
 }
+
 /** Effective counting for one activity given its category. */
 export function effectiveCounts(
   activity: Pick<Activity, "optionalWorkOverride">,

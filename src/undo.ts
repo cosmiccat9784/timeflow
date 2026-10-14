@@ -1,18 +1,24 @@
-import type { Activity } from "./types";
+import type { Category, Timetable } from "./types";
 
 /**
  * Undo/redo engine — spec §11. Snapshot-based, latest 20 operations.
- * Each logical operation (create/edit/move/resize/swap/delete/switch)
- * pushes one entry; import replacement uses its own restore point (V1).
+ * Snapshots cover all timetables + categories so import, category edits
+ * and timetable add/rename/delete are recoverable. Week records and the
+ * running timer are deliberately excluded (they are records, not edits).
  */
+export interface Snapshot {
+  timetables: Timetable[];
+  categories: Category[];
+}
+
 export interface HistoryEntry {
   label: string;
-  activities: Activity[];
+  snapshot: Snapshot;
   at: string;
 }
 
-function cloneActivities(a: Activity[]): Activity[] {
-  return a.map((x) => ({ ...x, reminderPreferences: x.reminderPreferences ? { ...x.reminderPreferences } : undefined }));
+function cloneSnapshot(s: Snapshot): Snapshot {
+  return JSON.parse(JSON.stringify(s)) as Snapshot;
 }
 
 export class UndoStack {
@@ -31,23 +37,23 @@ export class UndoStack {
   }
 
   /** Record state BEFORE a change. Call prior to committing. */
-  checkpoint(label: string, current: Activity[]): void {
-    this.undo.push({ label, activities: cloneActivities(current), at: new Date().toISOString() });
+  checkpoint(label: string, current: Snapshot): void {
+    this.undo.push({ label, snapshot: cloneSnapshot(current), at: new Date().toISOString() });
     if (this.undo.length > this.limit) this.undo.shift();
     this.redoStack = [];
   }
 
-  performUndo(current: Activity[]): { label: string; activities: Activity[] } | null {
+  performUndo(current: Snapshot): { label: string; snapshot: Snapshot } | null {
     const entry = this.undo.pop();
     if (!entry) return null;
-    this.redoStack.push({ label: entry.label, activities: cloneActivities(current), at: new Date().toISOString() });
+    this.redoStack.push({ label: entry.label, snapshot: cloneSnapshot(current), at: new Date().toISOString() });
     return entry;
   }
 
-  performRedo(current: Activity[]): { label: string; activities: Activity[] } | null {
+  performRedo(current: Snapshot): { label: string; snapshot: Snapshot } | null {
     const entry = this.redoStack.pop();
     if (!entry) return null;
-    this.undo.push({ label: entry.label, activities: cloneActivities(current), at: new Date().toISOString() });
+    this.undo.push({ label: entry.label, snapshot: cloneSnapshot(current), at: new Date().toISOString() });
     if (this.undo.length > this.limit) this.undo.shift();
     return entry;
   }

@@ -1,9 +1,10 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 // Tauri dev server: fixed port, strictPort. See https://v2.tauri.app/start/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), nodePolyfills({ include: ["buffer", "stream", "util", "events"] })],
   clearScreen: false,
   server: {
     port: 1420,

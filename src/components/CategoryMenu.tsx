@@ -18,22 +18,28 @@ export interface MenuState {
 export function CategoryMenu({
   menu,
   categories,
+  completed,
   onSelectCategory,
   onEdit,
   onSplit,
   onDuplicate,
   onDelete,
   onSwap,
+  onToggleComplete,
+  onStartTimer,
   onClose,
 }: {
   menu: MenuState;
   categories: Category[];
+  completed: boolean;
   onSelectCategory: (categoryId: string) => void;
   onEdit: () => void;
   onSplit: (() => void) | null;
   onDuplicate: () => void;
   onDelete: () => void;
   onSwap: () => void;
+  onToggleComplete: () => void;
+  onStartTimer: () => void;
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -94,6 +100,10 @@ export function CategoryMenu({
       ))}
       <hr />
       <button type="button" role="menuitem" onClick={onEdit}>✏️ Edit… (Enter)</button>
+      <button type="button" role="menuitem" onClick={onToggleComplete}>
+        {completed ? "○ Mark not complete" : "✓ Mark complete"}
+      </button>
+      <button type="button" role="menuitem" onClick={onStartTimer}>⏱ Start timer</button>
       {onSplit && (
         <button type="button" role="menuitem" onClick={onSplit}>
           ✂️ Split block ({menu.block.members.length} parts)
