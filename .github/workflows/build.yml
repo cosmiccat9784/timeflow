@@ -19,8 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-      - run: npm ci
+      - run: npm install --no-audit --no-fund
       - run: npm test
 
   # Platform packages build on native runners (§23.11 — no cross-OS packaging).
@@ -31,31 +30,31 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            target: nsis
+            bundles: nsis
           - os: macos-latest
-            target: dmg
+            bundles: dmg
           - os: ubuntu-22.04
-            target: appimage
+            bundles: appimage
+          - os: ubuntu-22.04
+            bundles: deb
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
       - name: Install Linux deps
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libfuse2
-      - run: npm ci
-      - run: npx tauri icon src-tauri/icons/icon.svg || true
-      - run: npm run tauri build
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - run: npm install --no-audit --no-fund
+      - run: npx tauri icon src-tauri/icons/icon.svg
+      - run: npm run tauri build -- --bundles ${{ matrix.bundles }}
       - name: Upload bundles
         uses: actions/upload-artifact@v4
         with:
-          name: timeflow-${{ runner.os }}
-          path: |
-            src-tauri/target/release/bundle/
+          name: timeflow-${{ runner.os }}-${{ matrix.bundles }}
+          path: src-tauri/target/release/bundle/
