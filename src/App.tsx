@@ -719,7 +719,7 @@ export default function App() {
     const tt = s.timetables.find((t) => t.id === s.activeTimetableId) ?? s.timetables[0];
     if (!tt) return;
     const wk = s.weekRecords[recordKey(tt.id, currentWeekId())];
-    const due = computeDueReminders(tt.activities, s.categories, s.settings, wk, weekdayToday(), new Date(), deliveredSession.current);
+    const due = computeDueReminders(tt.activities, s.categories, s.settings, wk, weekdayToday(), new Date(), deliveredSession.current, s.settings.clockFormat);
     if (due.length === 0) return;
     for (const d of due) {
       deliveredSession.current.add(d.key);

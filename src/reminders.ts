@@ -1,4 +1,6 @@
-import type { Activity, Category, GlobalSettings, Weekday, WeekRecord } from "./types";
+import type { Activity, Category, ClockFormat, GlobalSettings, Weekday, WeekRecord } from "./types";
+import { WEEKDAY_NAMES, displayName } from "./types";
+import { formatTime } from "./time";
 
 // V2 reminder engine — spec §21. Computes which reminders are due right now.
 // Keys embed the activity id + scheduled time so moved/deleted activities
@@ -27,14 +29,14 @@ function leadText(lead: number): string {
  */
 export function computeDueReminders(
   activities: Activity[],
-  _categories: Category[],
+  categories: Category[],
   settings: GlobalSettings,
   record: WeekRecord | undefined,
   today: Weekday,
   now: Date,
   deliveredSession: Set<string>,
+  clockFormat: ClockFormat,
 ): DueReminder[] {
-  void _categories;
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const nowMs = now.getTime();
   if (inQuietHours(nowMin, settings)) return [];
@@ -65,17 +67,18 @@ export function computeDueReminders(
     const endOn = r?.endEnabled ?? true;
     const startLead = r?.startLeadMinutes ?? d.startLead;
     const endLead = r?.endLeadMinutes ?? d.endLead;
-    const label = a.name.trim() || "Scheduled activity";
+    const label = displayName(a, categories);
+    const when = `${WEEKDAY_NAMES[a.weekday]} ${formatTime(a.startTime, clockFormat)}–${formatTime(a.endTime, clockFormat)}`;
     if (startOn) {
       consider(a, "start", a.startTime - startLead,
-        `▶ ${label} starts ${leadText(startLead)}`, label);
+        `▶ ${label} starts ${leadText(startLead)}`, when);
     }
     if (endOn) {
       consider(a, "end", a.endTime - endLead,
-        `■ ${label} ends ${leadText(endLead)}`, label);
+        `■ ${label} ends ${leadText(endLead)}`, when);
     }
     if (d.atEnd) {
-      consider(a, "atend", a.endTime, `✓ ${label} finished`, label);
+      consider(a, "atend", a.endTime, `✓ ${label} finished`, when);
     }
   }
   return out;
