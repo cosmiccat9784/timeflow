@@ -452,8 +452,6 @@ export function PlannerGrid({
     const effStart = kbMove?.key === b.key && preview?.kind === "move" ? preview.start : b.startTime;
     const effDay = kbMove?.key === b.key && preview?.kind === "move" ? preview.day : b.weekday;
     if (effDay !== days[dayIdx]) return null;
-    const top = ((effStart - visStart) / SLOT) * slotH;
-    const h = Math.max(minH, ((b.endTime - b.startTime) / SLOT) * slotH - 2);
     const lanes = lanesByDay.get(b.weekday)?.get(first.id);
     const widthPct = lanes ? 100 / lanes.lanes : 100;
     const leftPct = lanes ? (lanes.lane * 100) / lanes.lanes : 0;
@@ -462,11 +460,10 @@ export function PlannerGrid({
     const hasTimer = b.members.some((m) => m.id === timerActivityId);
     const isSelected = selectedBlockKey === b.key || kbMove?.key === b.key;
     // Only study- and optional-work blocks get a checkbox (§7 counting).
-    const tickable = (() => {
-      const c = catOf(categories, first.categoryId);
-      return !!c && (c.countsTowardStudy || c.countsTowardOptionalWork);
-    })();
-    const minH = tickable ? 30 : 20;
+    const c = catOf(categories, first.categoryId);
+    const tickable = !!c && (c.countsTowardStudy || c.countsTowardOptionalWork);
+    const top = ((effStart - visStart) / SLOT) * slotH;
+    const h = Math.max(tickable ? 30 : 20, ((b.endTime - b.startTime) / SLOT) * slotH - 2);
     return (
       <div
         key={b.key}
