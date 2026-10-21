@@ -1067,6 +1067,7 @@ export default function App() {
               onEditBlock={openEditFor}
               onDeleteBlock={deleteBlock}
               onSwapTarget={(b) => { if (swapFrom) swapBlocks(swapFrom, b.key); }}
+              onToggleCompleteBlock={toggleBlockComplete}
               onChangeDay={(d) => { setVisibleDay(d); if (plannerView === "week") setPlannerView("day"); }}
             />
           </div>
@@ -1122,6 +1123,10 @@ export default function App() {
           onDuplicate={() => duplicateBlock(menuBlock)}
           onDelete={() => deleteBlock(menuBlock)}
           onSwap={() => { setSwapFrom(menuBlock.key); setMenu(null); say("Swap mode: choose the second activity"); }}
+          completable={menuBlock.members.every((m) => {
+            const c = categories.find((x) => x.id === m.categoryId);
+            return !!c && (c.countsTowardStudy || c.countsTowardOptionalWork);
+          })}
           onToggleComplete={() => toggleBlockComplete(menuBlock)}
           onStartTimer={() => startTimer(menuBlock.members[0].id)}
           onClose={() => setMenu(null)}

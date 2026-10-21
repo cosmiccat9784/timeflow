@@ -166,17 +166,22 @@ function TodayRow({
   onEdit: () => void;
 }) {
   const cat = categoryById(categories, a.categoryId);
+  const canTick = !!cat && (cat.countsTowardStudy || cat.countsTowardOptionalWork);
   return (
     <div className={`today-row${done ? " done" : ""}`}>
-      <button
-        type="button"
-        className="check-btn"
-        aria-pressed={done}
-        aria-label={done ? `Mark ${displayName(a, categories)} not complete` : `Mark ${displayName(a, categories)} complete`}
-        onClick={onToggleComplete}
-      >
-        {done ? "☑" : "☐"}
-      </button>
+      {canTick ? (
+        <button
+          type="button"
+          className="check-btn"
+          aria-pressed={done}
+          aria-label={done ? `Mark ${displayName(a, categories)} not complete` : `Mark ${displayName(a, categories)} complete`}
+          onClick={onToggleComplete}
+        >
+          {done ? "☑" : "☐"}
+        </button>
+      ) : (
+        <span className="check-btn" aria-hidden="true" />
+      )}
       <span className="swatch" style={{ background: cat?.colour ?? "#eee" }} aria-hidden="true" />
       <span className="today-main">
         <strong>{displayName(a, categories)}</strong>

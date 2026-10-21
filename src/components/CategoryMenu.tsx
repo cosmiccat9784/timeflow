@@ -19,6 +19,7 @@ export function CategoryMenu({
   menu,
   categories,
   completed,
+  completable,
   onSelectCategory,
   onEdit,
   onSplit,
@@ -32,6 +33,7 @@ export function CategoryMenu({
   menu: MenuState;
   categories: Category[];
   completed: boolean;
+  completable: boolean;
   onSelectCategory: (categoryId: string) => void;
   onEdit: () => void;
   onSplit: (() => void) | null;
@@ -100,9 +102,11 @@ export function CategoryMenu({
       ))}
       <hr />
       <button type="button" role="menuitem" onClick={onEdit}>✏️ Edit… (Enter)</button>
-      <button type="button" role="menuitem" onClick={onToggleComplete}>
-        {completed ? "○ Mark not complete" : "✓ Mark complete"}
-      </button>
+      {completable && (
+        <button type="button" role="menuitem" onClick={onToggleComplete}>
+          {completed ? "○ Mark not complete" : "✓ Mark complete"}
+        </button>
+      )}
       <button type="button" role="menuitem" onClick={onStartTimer}>⏱ Start timer</button>
       {onSplit && (
         <button type="button" role="menuitem" onClick={onSplit}>

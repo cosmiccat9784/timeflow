@@ -59,6 +59,7 @@ export function PlannerGrid({
   swapArmed,
   completedIds,
   timerActivityId,
+  onToggleCompleteBlock,
   onQuickSwitch,
   onSelectBlock,
   onOpenMenu,
@@ -86,6 +87,7 @@ export function PlannerGrid({
   swapArmed: boolean;
   completedIds: Set<string>;
   timerActivityId: string | null;
+  onToggleCompleteBlock: (block: MergedBlock) => void;
   onQuickSwitch: (block: MergedBlock) => void;
   onSelectBlock: (key: string | null) => void;
   onOpenMenu: (m: MenuRequest) => void;
@@ -451,7 +453,7 @@ export function PlannerGrid({
     const effDay = kbMove?.key === b.key && preview?.kind === "move" ? preview.day : b.weekday;
     if (effDay !== days[dayIdx]) return null;
     const top = ((effStart - visStart) / SLOT) * slotH;
-    const h = Math.max(20, ((b.endTime - b.startTime) / SLOT) * slotH - 2);
+    const h = Math.max(minH, ((b.endTime - b.startTime) / SLOT) * slotH - 2);
     const lanes = lanesByDay.get(b.weekday)?.get(first.id);
     const widthPct = lanes ? 100 / lanes.lanes : 100;
     const leftPct = lanes ? (lanes.lane * 100) / lanes.lanes : 0;
@@ -459,6 +461,12 @@ export function PlannerGrid({
     const isDone = b.members.every((m) => completedIds.has(m.id));
     const hasTimer = b.members.some((m) => m.id === timerActivityId);
     const isSelected = selectedBlockKey === b.key || kbMove?.key === b.key;
+    // Only study- and optional-work blocks get a checkbox (§7 counting).
+    const tickable = (() => {
+      const c = catOf(categories, first.categoryId);
+      return !!c && (c.countsTowardStudy || c.countsTowardOptionalWork);
+    })();
+    const minH = tickable ? 30 : 20;
     return (
       <div
         key={b.key}
@@ -475,13 +483,27 @@ export function PlannerGrid({
         aria-label={`${label}, ${WEEKDAY_NAMES[b.weekday]} ${formatTime(b.startTime, clockFormat)} to ${formatTime(b.endTime, clockFormat)}, ${cat?.name ?? "unknown category"}${hasConflict ? ", scheduling conflict" : ""}${b.members.length > 1 ? `, merged block of ${b.members.length}` : ""}`}
       >
         <div className="resize-handle top" data-edge="top" aria-hidden="true" />
-        <button
-          type="button"
-          data-focus-target
-          onKeyDown={(e) => onBlockKeyDown(e, b, blocksByDay.get(b.weekday)?.findIndex((x) => x.key === b.key) ?? 0)}
-          aria-label={`${label}. Press Enter to edit. Press S to switch category. Press M to move with keyboard.`}
-          style={{ all: "unset", display: "block", width: "100%", cursor: "pointer", touchAction: "none" } as React.CSSProperties}
-        >
+        <div className="block-row">
+          {tickable && (
+            <button
+              type="button"
+              className="check-inline"
+              aria-pressed={isDone}
+              aria-label={isDone ? `Mark ${label} not complete` : `Mark ${label} complete`}
+              title={isDone ? "Mark not complete" : "Mark complete"}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); onToggleCompleteBlock(b); }}
+            >
+              {isDone ? "☑" : "☐"}
+            </button>
+          )}
+          <button
+            type="button"
+            data-focus-target
+            onKeyDown={(e) => onBlockKeyDown(e, b, blocksByDay.get(b.weekday)?.findIndex((x) => x.key === b.key) ?? 0)}
+            aria-label={`${label}. Press Enter to edit. Press S to switch category. Press M to move with keyboard.`}
+            style={{ all: "unset", display: "block", flex: 1, minWidth: 0, cursor: "pointer", touchAction: "none" } as React.CSSProperties}
+          >
           <span className="bname">
             <span className="bicon" aria-hidden="true">{cat?.icon}</span>
             {label}
@@ -497,7 +519,8 @@ export function PlannerGrid({
           {b.members.length > 1 && h > 50 && (
             <span className="bmerge">×{b.members.length} merged — switches together</span>
           )}
-        </button>
+          </button>
+        </div>
         {b.members.length > 1 &&
           b.members.slice(1).map((m) => (
             <div
