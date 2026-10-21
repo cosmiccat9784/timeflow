@@ -170,11 +170,13 @@ export function PlannerGrid({
 
   // Stretch rows so the visible range always fills the window height;
   // fall back to scrolling once rows would get shorter than the minimum.
+  // A ResizeObserver (not window resize) keeps this correct when chrome
+  // such as focus mode shows or hides.
   useLayoutEffect(() => {
+    const grid = gridRef.current;
+    const parent = grid?.parentElement;
+    if (!grid || !parent) return;
     const measure = () => {
-      const grid = gridRef.current;
-      const parent = grid?.parentElement;
-      if (!grid || !parent) return;
       const head = grid.querySelector(".day-head") as HTMLElement | null;
       const headH = head ? head.getBoundingClientRect().height : 48;
       const avail = parent.clientHeight - headH - 28;
@@ -182,8 +184,9 @@ export function PlannerGrid({
       setSlotH(Math.max(MIN_SLOT_H, Math.min(MAX_SLOT_H, ideal || MIN_SLOT_H)));
     };
     measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(parent);
+    return () => ro.disconnect();
   }, [slots, view]);
 
   // ---------- pointer handlers (delegated on container) ----------

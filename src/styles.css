@@ -385,6 +385,22 @@ button { cursor: pointer; }
 [data-theme="dark"] .create-preview { background: rgba(91, 141, 239, 0.25); }
 [data-theme="dark"] .today-row .swatch { border-color: rgba(255, 255, 255, 0.3); }
 
+/* ---------- Focus mode: timetable only (F11 toggles, Esc exits) ---------- */
+.app.focus .sidebar,
+.app.focus .toolbar,
+.app.focus .day-tabs,
+.app.focus .bottom-tabs,
+.app.focus .main > .notice {
+  display: none;
+}
+.focus-exit {
+  position: fixed;
+  right: 14px;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  z-index: 80;
+  box-shadow: var(--shadow);
+}
+
 /* ---------- V1/V2 additions ---------- */
 
 .modal.wide { width: min(860px, 100%); }

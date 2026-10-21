@@ -71,6 +71,7 @@ export default function App() {
   const [announce, setAnnounce] = useState("");
   const [pending, setPending] = useState<PendingOp | null>(null);
   const [swapFrom, setSwapFrom] = useState<string | null>(null);
+  const [focusMode, setFocusMode] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ kind: "saved" | "saving" | "error"; text: string }>({ kind: "saved", text: "Saved" });
   const [showConflicts, setShowConflicts] = useState(false);
   const [recap, setRecap] = useState<RecapData | null>(null);
@@ -145,8 +146,14 @@ export default function App() {
   // Global shortcuts: undo/redo (§9.1) + Escape cancels swap mode.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === "F11") {
+        e.preventDefault();
+        setFocusMode((v) => !v);
+        return;
+      }
       if (e.key === "Escape") {
         setSwapFrom(null);
+        setFocusMode(false);
         return;
       }
       const mod = e.ctrlKey || e.metaKey;
@@ -892,7 +899,7 @@ export default function App() {
   const timer = state.activeTimer;
 
   return (
-    <div className="app">
+    <div className={`app${focusMode ? " focus" : ""}`}>
       <aside className="sidebar" aria-label="Planner navigation">
         <div className="brand">TimeFlow<small>weekly timetable</small></div>
         <div className="field" style={{ marginBottom: 0 }}>
@@ -988,6 +995,7 @@ export default function App() {
           )}
           <button type="button" className="btn" onClick={doUndo} disabled={!undoRef.current.canUndo} title="Undo (Ctrl+Z)">↩</button>
           <button type="button" className="btn" onClick={doRedo} disabled={!undoRef.current.canRedo} title="Redo">↪</button>
+          <button type="button" className="btn" onClick={() => setFocusMode((v) => !v)} title="Focus mode — timetable only (F11)">⛶</button>
           <button type="button" className="btn" onClick={() => setSettingsOpen(true)}>⚙</button>
         </div>
 
@@ -1237,6 +1245,11 @@ export default function App() {
       )}
 
       <Toast toast={toast} onDismiss={() => setToast(null)} />
+      {focusMode && (
+        <button type="button" className="btn focus-exit" onClick={() => setFocusMode(false)}>
+          ✕ Exit focus (Esc)
+        </button>
+      )}
       <div aria-live="polite" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
         {announce}
       </div>
