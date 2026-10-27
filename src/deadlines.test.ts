@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { daysUntil, relativeLabel, sortByNearness } from "../deadlines";
+import { daysUntil, relativeLabel, sortByNearness } from "./deadlines";
 
 describe("deadline nearness (repeating week, no dates)", () => {
   it("counts forward to the weekday", () => {
