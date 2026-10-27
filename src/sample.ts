@@ -1,4 +1,4 @@
-import type { Activity, Weekday } from "./types";
+import type { Activity, Deadline, Weekday } from "./types";
 import { nowIso, uid } from "./types";
 
 function base(
@@ -44,5 +44,23 @@ export function sampleActivities(): Activity[] {
     base("Personal time", "personal", 5, 10, 0, 11, 0),
     base("Family lunch", "meals", 6, 12, 0, 13, 0),
     base("Reading", "study", 6, 15, 0, 15, 30, { subject: "English" }),
+  ];
+}
+
+function sampleDeadline(
+  title: string,
+  weekday: Weekday,
+  subject: string,
+  notes?: string,
+): Deadline {
+  const t = nowIso();
+  return { id: uid("dl"), title, weekday, subject, notes, createdAt: t, updatedAt: t };
+}
+
+// A couple of example deadlines so Priorities isn't empty on first run.
+export function sampleDeadlines(): Deadline[] {
+  return [
+    sampleDeadline("Maths assignment", 2, "Mathematics", "Exercises 4B–4D"),
+    sampleDeadline("English exam", 4, "English"),
   ];
 }

@@ -1,0 +1,68 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:block": {
+    "description": {
+      "identifier": "mtn:station_rail",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "mtn:platform_pos": [0, 1, 2, 3]
+      }
+    },
+    "components": {
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "mtn:station_rail_single",
+          "render_method": "opaque"
+        }
+      }
+    },
+    "permutations": [
+      {
+        "condition": "query.block_state('mtn:platform_pos') == 0",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "mtn:station_rail_single",
+              "render_method": "opaque"
+            }
+          }
+        }
+      },
+      {
+        "condition": "query.block_state('mtn:platform_pos') == 1",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "mtn:station_rail_left",
+              "render_method": "opaque"
+            }
+          }
+        }
+      },
+      {
+        "condition": "query.block_state('mtn:platform_pos') == 2",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "mtn:station_rail_center",
+              "render_method": "opaque"
+            }
+          }
+        }
+      },
+      {
+        "condition": "query.block_state('mtn:platform_pos') == 3",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "mtn:station_rail_right",
+              "render_method": "opaque"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

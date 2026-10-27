@@ -1,0 +1,17 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "MTN Probe v1.0.2 (Resource)",
+    "description": "Minimal texture probe: one block, one texture.",
+    "uuid": "efb09030-cf53-4bf7-8a53-bf6b7f23d48d",
+    "version": [1, 0, 2],
+    "min_engine_version": [1, 26, 0]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "3df4878a-68d7-4f68-9da8-829af8718aaa",
+      "version": [1, 0, 2]
+    }
+  ]
+}

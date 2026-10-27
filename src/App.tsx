@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Activity, Category, GlobalSettings, PersistedState, RestorePoint, Timetable, Weekday, WeekRecord } from "./types";
+import type { Activity, Category, Deadline, GlobalSettings, PersistedState, RestorePoint, Timetable, Weekday, WeekRecord } from "./types";
 import { WEEKDAY_NAMES, WEEKDAY_SHORT, displayName, nowIso, uid } from "./types";
 import { DEFAULT_CATEGORIES } from "./categories";
 import { SLOT, formatDuration, formatTime } from "./time";
-import { validateActivity, validateCategories } from "./validation";
+import { validateActivity, validateCategories, validateDeadline } from "./validation";
 import { UndoStack, type Snapshot } from "./undo";
 import { computeMergedBlocks, type MergedBlock } from "./merge";
 import { assignLanes, conflictsForCandidate, findConflicts } from "./conflicts";
 import { allDayTotals, weekTotals } from "./totals";
 import { defaultTimetable, defaultSettings, loadState, saveState, weekdayToday, minutesNow } from "./store";
-import { sampleActivities } from "./sample";
+import { sampleActivities, sampleDeadlines } from "./sample";
 import {
   currentWeekId, recordKey, freshWeekRecord, withCompletion, withMinutes,
   withDelivered, timerElapsedSec, formatElapsed,
@@ -29,6 +29,7 @@ import { CategoryManager } from "./components/CategoryManager";
 import { TodayView } from "./components/TodayView";
 import { ProgressView } from "./components/ProgressView";
 import { RecapModal, recapToCsv, type RecapData } from "./components/RecapModal";
+import { PrioritiesView } from "./components/PrioritiesView";
 
 interface PendingOp {
   label: string;
@@ -51,8 +52,9 @@ export default function App() {
   const { timetables, activeTimetableId, categories, settings } = state;
   const active = timetables.find((t) => t.id === activeTimetableId) ?? timetables[0];
   const activities = active.activities;
+  const deadlines: Deadline[] = useMemo(() => active.deadlines ?? [], [active]);
 
-  const [screen, setScreen] = useState<"planner" | "today" | "progress">("planner");
+  const [screen, setScreen] = useState<"planner" | "today" | "progress" | "priorities">("planner");
   const [plannerView, setPlannerView] = useState<"week" | "day">(() =>
     typeof window !== "undefined" && window.innerWidth < 1024 ? "day" : "week",
   );
@@ -228,6 +230,10 @@ export default function App() {
     for (const t of next.timetables) {
       for (const a of t.activities) {
         const errs = validateActivity(a, next.categories);
+        if (errs.length > 0) return errs[0].message;
+      }
+      for (const dl of t.deadlines ?? []) {
+        const errs = validateDeadline(dl);
         if (errs.length > 0) return errs[0].message;
       }
     }
@@ -805,6 +811,42 @@ export default function App() {
     if (!r.ok) setToast({ message: r.error ?? "Download failed." });
   };
 
+  // ---------- deadlines (all-day, per timetable) ----------
+
+  const withDeadlines = (next: Deadline[], base: Timetable[] = timetables): Timetable[] =>
+    base.map((t) => (t.id === active.id ? { ...t, deadlines: next } : t));
+
+  const addDeadline = (draft: { title: string; weekday: Weekday; subject: string; notes: string }) => {
+    const t = nowIso();
+    const d: Deadline = {
+      id: uid("dl"),
+      title: draft.title.trim(),
+      weekday: draft.weekday,
+      subject: draft.subject.trim() || undefined,
+      notes: draft.notes.trim() || undefined,
+      createdAt: t,
+      updatedAt: t,
+    };
+    const err = commit({ timetables: withDeadlines([...deadlines, d]), categories }, `Added deadline ${d.title}`);
+    if (err) setToast({ message: err });
+    else notify({ message: `Added “${d.title}”.`, undoLabel: "Undo", onUndo: doUndo });
+  };
+
+  const updateDeadline = (id: string, patch: Partial<Deadline>) => {
+    const t = nowIso();
+    const next = deadlines.map((d) => (d.id === id ? { ...d, ...patch, title: (patch.title ?? d.title).trim(), updatedAt: t } : d));
+    const err = commit({ timetables: withDeadlines(next), categories }, "Edited deadline");
+    if (err) setToast({ message: err });
+    else notify({ message: "Deadline updated.", undoLabel: "Undo", onUndo: doUndo });
+  };
+
+  const deleteDeadline = (id: string) => {
+    const found = deadlines.find((d) => d.id === id);
+    const err = commit({ timetables: withDeadlines(deadlines.filter((d) => d.id !== id)), categories }, `Deleted deadline ${found?.title ?? ""}`);
+    if (err) setToast({ message: err });
+    else notify({ message: "Deadline deleted.", undoLabel: "Undo", onUndo: doUndo });
+  };
+
   // ---------- editor ----------
 
   /** + New button: no preset time — the grid picker starts blank and the
@@ -859,7 +901,12 @@ export default function App() {
   // ---------- sample / clear ----------
 
   const createSample = () => {
-    const err = commitActive(sampleActivities(), "Created sample timetable");
+    const t = nowIso();
+    const dls: Deadline[] = sampleDeadlines().map((d) => ({ ...d, id: uid("dl"), createdAt: t, updatedAt: t }));
+    const err = commit(
+      { timetables: timetables.map((x) => (x.id === active.id ? { ...x, activities: sampleActivities(), deadlines: dls } : x)), categories },
+      "Created sample timetable",
+    );
     if (err) setToast({ message: err });
     else notify({ message: "Sample timetable created. ", undoLabel: "Undo", onUndo: doUndo });
   };
@@ -916,6 +963,7 @@ export default function App() {
         <div className="nav-group" role="group" aria-label="Views">
           <button type="button" className="nav-btn" aria-pressed={screen === "planner"} onClick={() => setScreen("planner")}>🗓 Planner</button>
           <button type="button" className="nav-btn" aria-pressed={screen === "today"} onClick={() => setScreen("today")}>● Today</button>
+          <button type="button" className="nav-btn" aria-pressed={screen === "priorities"} onClick={() => setScreen("priorities")}>📌 Priorities</button>
           <button type="button" className="nav-btn" aria-pressed={screen === "progress"} onClick={() => setScreen("progress")}>📈 Progress</button>
         </div>
         <div className="totals-card" aria-label="Weekly totals">
@@ -966,7 +1014,7 @@ export default function App() {
 
       <div className="main">
         <div className="toolbar" role="toolbar" aria-label="Planner toolbar">
-          <h1>{screen === "planner" ? active.name : screen === "today" ? "Today" : "Progress"}</h1>
+          <h1>{screen === "planner" ? active.name : screen === "today" ? "Today" : screen === "priorities" ? "Priorities" : "Progress"}</h1>
           {screen === "planner" && (
             <>
               <div className="segmented" role="group" aria-label="Week or day view">
@@ -1057,6 +1105,7 @@ export default function App() {
               swapArmed={swapFrom !== null}
               completedIds={completedIds}
               timerActivityId={timer && timer.timetableId === active.id ? timer.activityId : null}
+              deadlines={deadlines}
               onQuickSwitch={doQuickSwitch}
               onSelectBlock={(k) => setSelectedKey(k)}
               onOpenMenu={(m) => { setMenu(m); setSelectedKey(m.block.key); }}
@@ -1075,6 +1124,7 @@ export default function App() {
           <div className="grid-wrap">
             <TodayView
               activities={activities}
+              deadlines={deadlines}
               categories={categories}
               record={weekRecord}
               timer={timer && timer.timetableId === active.id ? timer : null}
@@ -1093,6 +1143,17 @@ export default function App() {
               onOpenPlanner={(d) => { setVisibleDay(d); setPlannerView("day"); setScreen("planner"); }}
             />
           </div>
+        ) : screen === "priorities" ? (
+          <div className="grid-wrap">
+            <PrioritiesView
+              deadlines={deadlines}
+              subjects={existingSubjects}
+              today={today}
+              onAdd={addDeadline}
+              onUpdate={updateDeadline}
+              onDelete={deleteDeadline}
+            />
+          </div>
         ) : (
           <div className="grid-wrap">
             <ProgressView
@@ -1107,6 +1168,7 @@ export default function App() {
         <nav className="bottom-tabs" aria-label="Primary">
           <button type="button" aria-pressed={screen === "planner"} onClick={() => setScreen("planner")}>Planner</button>
           <button type="button" aria-pressed={screen === "today"} onClick={() => setScreen("today")}>Today</button>
+          <button type="button" aria-pressed={screen === "priorities"} onClick={() => setScreen("priorities")}>Priorities</button>
           <button type="button" aria-pressed={screen === "progress"} onClick={() => setScreen("progress")}>Progress</button>
           <button type="button" onClick={() => setSettingsOpen(true)}>Settings</button>
         </nav>

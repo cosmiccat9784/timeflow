@@ -1,0 +1,34 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "MTN Probe v1.0.2 (Behavior)",
+    "description": "Minimal script-execution probe: announces on world load, answers !ping.",
+    "uuid": "ed091d6e-c035-40b1-a25d-bdd5741884ad",
+    "version": [1, 0, 2],
+    "min_engine_version": [1, 26, 0]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "22baeeb8-7d46-4035-9942-1beb3932f011",
+      "version": [1, 0, 2]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "entry": "scripts/main.js",
+      "uuid": "d5ab39bd-eabc-4311-8384-cf186dfc78e5",
+      "version": [1, 0, 2]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "efb09030-cf53-4bf7-8a53-bf6b7f23d48d",
+      "version": [1, 0, 2]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.0.0"
+    }
+  ]
+}

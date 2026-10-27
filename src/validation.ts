@@ -62,6 +62,19 @@ export function validateCategories(categories: Category[]): ValidationError[] {
   return errors;
 }
 
+/**
+ * Validate a deadline for commit. Titles are required (unlike activities,
+ * there is no category to fall back on).
+ */
+export function validateDeadline(d: { title: string; weekday: number }): ValidationError[] {
+  const errors: ValidationError[] = [];
+  if (!d.title || !d.title.trim())
+    errors.push({ field: "title", message: "Deadline title is required." });
+  if (!Number.isInteger(d.weekday) || d.weekday < 0 || d.weekday > 6)
+    errors.push({ field: "weekday", message: "Weekday must be Monday–Sunday." });
+  return errors;
+}
+
 /** Effective study flag used by totals engine. */
 export function countsAsStudy(a: Activity, categories: Category[]): boolean {
   const cat = categories.find((c) => c.id === a.categoryId);

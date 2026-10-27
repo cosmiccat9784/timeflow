@@ -1,0 +1,38 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "MTN Logic v1.0.4 (Behavior)",
+    "description": "REQUIRED: station logic, lines, routing and fares. Always activate together with 'MTN Textures (Resource)'.",
+    "uuid": "67f91dca-553a-460d-bcaa-ab5b15e52e0c",
+    "version": [1, 0, 4],
+    "min_engine_version": [1, 26, 0]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "87b9ef09-9ffb-4b72-8dab-85d0cddae16b",
+      "version": [1, 0, 4]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "entry": "scripts/main.js",
+      "uuid": "0fd30e57-db39-4b4d-8f52-21f81ae32dd6",
+      "version": [1, 0, 4]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "37fc614a-8597-4171-b3d1-c213972261d8",
+      "version": [1, 0, 4]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.0.0"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.0.0"
+    }
+  ]
+}

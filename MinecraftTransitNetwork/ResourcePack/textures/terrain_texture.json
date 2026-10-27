@@ -1,0 +1,32 @@
+{
+  "resource_pack_name": "mtn",
+  "texture_name": "atlas.terrain",
+  "padding": 8,
+  "num_mip_levels": 4,
+  "textures": {
+    "station_rail_single": {
+      "textures": "textures/blocks/Rail_single"
+    },
+    "station_rail_left": {
+      "textures": "textures/blocks/Rail_Left"
+    },
+    "station_rail_center": {
+      "textures": "textures/blocks/Rail_center"
+    },
+    "station_rail_right": {
+      "textures": "textures/blocks/Rail_Right"
+    },
+    "mtn:station_rail_single": {
+      "textures": "textures/blocks/Rail_single"
+    },
+    "mtn:station_rail_left": {
+      "textures": "textures/blocks/Rail_Left"
+    },
+    "mtn:station_rail_center": {
+      "textures": "textures/blocks/Rail_center"
+    },
+    "mtn:station_rail_right": {
+      "textures": "textures/blocks/Rail_Right"
+    }
+  }
+}

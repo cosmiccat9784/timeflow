@@ -2,7 +2,7 @@
 // Schema v2: multiple timetables, week records, restore points, timer.
 // Stable IDs + explicit schema version. Duration is derived, never stored.
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 export const STORAGE_KEY = "timeflow.v1.state";
 
 /** Monday = 0 … Sunday = 6 (ISO-style, Monday-first per §3.5). */
@@ -58,6 +58,19 @@ export interface Timetable {
   id: string;
   name: string;
   activities: Activity[];
+  /** All-day deadlines (exams, assignments) pinned to a weekday. */
+  deadlines: Deadline[];
+}
+
+/** All-day deadline — no time slot, ordered by days-until in Priorities. */
+export interface Deadline {
+  id: string;
+  title: string;
+  weekday: Weekday;
+  subject?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /** V2 week-specific record — separate from the repeating template (§13.6). */

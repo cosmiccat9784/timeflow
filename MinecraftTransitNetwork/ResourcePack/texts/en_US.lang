@@ -1,0 +1,4 @@
+pack.name=MTN Textures v1.0.4 (Resource)
+pack.description=REQUIRED: Station Rail pictures. Activate with 'MTN Logic (Behavior)'.
+
+tile.mtn:station_rail.name=Station Rail

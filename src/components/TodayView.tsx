@@ -1,4 +1,4 @@
-import type { Activity, Category, ClockFormat, TimerState, Weekday, WeekRecord } from "../types";
+import type { Activity, Category, ClockFormat, Deadline, TimerState, Weekday, WeekRecord } from "../types";
 import { WEEKDAY_NAMES, displayName } from "../types";
 import { formatTime, formatDuration } from "../time";
 import { categoryById } from "../categories";
@@ -11,6 +11,7 @@ import { formatElapsed, timerElapsedSec } from "../records";
 
 export function TodayView({
   activities,
+  deadlines,
   categories,
   record,
   timer,
@@ -29,6 +30,7 @@ export function TodayView({
   onOpenPlanner,
 }: {
   activities: Activity[];
+  deadlines: Deadline[];
   categories: Category[];
   record: WeekRecord;
   timer: TimerState | null;
@@ -117,6 +119,24 @@ export function TodayView({
           <button type="button" className="btn" onClick={() => onOpenPlanner(today)}>Open in planner</button>
         </div>
       </div>
+
+      {deadlines.filter((d) => d.weekday === today).length > 0 && (
+        <>
+          <h3>Due today</h3>
+          <ul className="timeline">
+            {deadlines.filter((d) => d.weekday === today).map((d) => (
+              <li key={d.id} className="today-row">
+                <span aria-hidden="true">📌</span>
+                <span className="today-main">
+                  <strong>{d.title}</strong>
+                  {d.subject && <span className="derived"> · {d.subject}</span>}
+                  {d.notes && <span className="derived"> — {d.notes}</span>}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
       <h3>Timeline</h3>
       {todays.length === 0 ? (

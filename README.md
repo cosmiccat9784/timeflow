@@ -122,6 +122,11 @@ src-tauri/
 
 ## V1 — import, export, management (done, 0.2.0)
 
+- Deadlines (0.3.0): all-day exam/assignment entries pinned to weekdays, planner
+  chips, a Priorities tab ordered nearest-first (days-until within the
+  repeating week — no calendar dates), Today "due today" list, JSON backup
+  included, per-timetable with undo support.
+
 - [x] Excel import tuned to the real reference workbook (weekday/weekend sections, repeated-cell runs, legend fills, summary exclusion, fuzzy days, PM assumption flagged)
 - [x] CSV import into the same guided preview
 - [x] Guided flow: file → sheet → preview/correct (invalid times need explicit fix or exclusion) → replace/merge/new-timetable

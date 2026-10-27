@@ -1,9 +1,9 @@
 import type { Category, GlobalSettings, PersistedState, Timetable, Weekday } from "./types";
 import { SCHEMA_VERSION, STORAGE_KEY, nowIso, uid } from "./types";
 import { DEFAULT_CATEGORIES, DEFAULT_SWITCH_PAIR, LEGACY_CATEGORY_NAMES } from "./categories";
-import { validateActivity, validateCategories } from "./validation";
+import { validateActivity, validateCategories, validateDeadline } from "./validation";
 
-export const APP_VERSION = "0.2.0";
+export const APP_VERSION = "0.3.0";
 
 export function defaultSettings(): GlobalSettings {
   const darkOS = typeof window !== "undefined" && !!window.matchMedia?.("(prefers-color-scheme: dark)").matches;
@@ -22,7 +22,7 @@ export function defaultSettings(): GlobalSettings {
 }
 
 export function defaultTimetable(name = "My Week"): Timetable {
-  return { id: uid("tt"), name, activities: [] };
+  return { id: uid("tt"), name, activities: [], deadlines: [] };
 }
 
 export function defaultState(): PersistedState {
@@ -70,7 +70,7 @@ export function migrateState(raw: unknown): PersistedState | null {
   if (typeof raw !== "object" || raw === null) return null;
   const r = raw as Record<string, unknown>;
   try {
-    if (r.schemaVersion === SCHEMA_VERSION) {
+    if (r.schemaVersion === SCHEMA_VERSION || r.schemaVersion === 2) {
       const s = r as unknown as PersistedState;
       if (!Array.isArray(s.timetables) || s.timetables.length === 0) return null;
       if (!Array.isArray(s.categories)) return null;
@@ -85,16 +85,19 @@ export function migrateState(raw: unknown): PersistedState | null {
       if (!Array.isArray(s.restorePoints)) s.restorePoints = [];
       if (!s.timetables.some((t) => t.id === s.activeTimetableId))
         s.activeTimetableId = s.timetables[0].id;
+      for (const t of s.timetables) {
+        if (!Array.isArray(t.deadlines)) t.deadlines = [];
+      }
       return sanitizeState(s);
     }
-    // v1 → v2: wrap the single timetable, add records/restore/timer fields.
+    // v1 → v3: wrap the single timetable, add records/restore/timer fields.
     if (r.schemaVersion === 1) {
       const v1 = r as unknown as {
         timetable?: Timetable; categories?: Category[]; settings?: Partial<GlobalSettings>; subjects?: string[]
       };
       if (!v1.timetable || !Array.isArray(v1.timetable.activities)) return null;
       const s = defaultState();
-      s.timetables = [{ ...v1.timetable }];
+      s.timetables = [{ ...v1.timetable, deadlines: [] }];
       s.activeTimetableId = s.timetables[0].id;
       if (Array.isArray(v1.categories) && validateCategories(v1.categories).length <= 3)
         s.categories = adoptSimpleLabels(v1.categories);
@@ -113,6 +116,8 @@ export function sanitizeState(s: PersistedState): PersistedState {
     t.activities = t.activities.filter(
       (a) => validateActivity(a, s.categories).length === 0,
     );
+    if (!Array.isArray(t.deadlines)) t.deadlines = [];
+    t.deadlines = t.deadlines.filter((d) => validateDeadline(d).length === 0);
   }
   return s;
 }
