@@ -529,7 +529,7 @@ export default function App() {
     setImportOpen(false);
     pushRestorePoint(`Before import ${r.fileName}`);
     if (r.mode === "new") {
-      const tt = { id: uid("tt"), name: r.newName, activities: r.activities };
+      const tt = { id: uid("tt"), name: r.newName, activities: r.activities, deadlines: [] as Deadline[] };
       const err = commit({ timetables: [...timetables, tt], categories }, `Imported ${r.imported} into “${tt.name}”`);
       if (err) {
         setToast({ message: err });
