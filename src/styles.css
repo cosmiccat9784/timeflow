@@ -141,7 +141,7 @@ button { cursor: pointer; }
   border-bottom: 1px dashed transparent;
   white-space: nowrap;
 }
-.day-col { position: relative; border-left: 1px solid var(--grid-line); touch-action: pan-x pan-y; }
+.day-col { position: relative; border-left: 1px solid var(--grid-line); touch-action: pan-x pan-y; overflow: hidden; }
 .day-col.today { background: #fbfcff; }
 .slot-line { height: var(--slot-h); border-bottom: 1px solid var(--grid-line); }
 .slot-line.hour { border-bottom: 1px solid #ddd5c2; }
@@ -438,6 +438,11 @@ button { cursor: pointer; }
 }
 .check-inline:hover { background: rgba(255, 255, 255, 0.5); }
 [data-theme="dark"] .check-inline:hover { background: rgba(255, 255, 255, 0.15); }
+
+/* Continuation edges: a block running past the visible window gets a flat
+   edge instead of rounded corners, matching the neat cut at the bottom. */
+.block.cont-top { border-top-left-radius: 0; border-top-right-radius: 0; }
+.block.cont-bottom { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
 
 /* Completion + timer badges on blocks */
 .block.done { opacity: 0.62; }

@@ -462,13 +462,20 @@ export function PlannerGrid({
     // Only study- and optional-work blocks get a checkbox (§7 counting).
     const c = catOf(categories, first.categoryId);
     const tickable = !!c && (c.countsTowardStudy || c.countsTowardOptionalWork);
-    const top = ((effStart - visStart) / SLOT) * slotH;
-    const h = Math.max(tickable ? 30 : 20, ((b.endTime - b.startTime) / SLOT) * slotH - 2);
+    // Clamp to the visible window so blocks cut off neatly at the top edge
+    // just like they already do at the bottom (flat edge = continues).
+    const rawTop = ((effStart - visStart) / SLOT) * slotH;
+    const rawH = Math.max(tickable ? 30 : 20, ((b.endTime - b.startTime) / SLOT) * slotH - 2);
+    if (rawTop + rawH <= 0 || rawTop >= colH) return null;
+    const continuesTop = effStart < visStart;
+    const continuesBottom = b.endTime > visEnd;
+    const top = Math.max(0, rawTop);
+    const h = Math.max(8, Math.min(colH, rawTop + rawH) - top);
     return (
       <div
         key={b.key}
         data-block={b.key}
-        className={`block${b.members.length > 1 ? " merged" : ""}${hasConflict ? " conflict" : ""}${isSelected ? " selected" : ""}${isDone ? " done" : ""}`}
+        className={`block${b.members.length > 1 ? " merged" : ""}${hasConflict ? " conflict" : ""}${isSelected ? " selected" : ""}${isDone ? " done" : ""}${continuesTop ? " cont-top" : ""}${continuesBottom ? " cont-bottom" : ""}`}
         style={{
           top,
           height: h,
@@ -477,7 +484,7 @@ export function PlannerGrid({
           width: `calc(${widthPct}% - 6px)`,
         }}
         role="group"
-        aria-label={`${label}, ${WEEKDAY_NAMES[b.weekday]} ${formatTime(b.startTime, clockFormat)} to ${formatTime(b.endTime, clockFormat)}, ${cat?.name ?? "unknown category"}${hasConflict ? ", scheduling conflict" : ""}${b.members.length > 1 ? `, merged block of ${b.members.length}` : ""}`}
+        aria-label={`${label}, ${WEEKDAY_NAMES[b.weekday]} ${formatTime(b.startTime, clockFormat)} to ${formatTime(b.endTime, clockFormat)}, ${cat?.name ?? "unknown category"}${continuesTop ? ", continues before the visible start" : ""}${continuesBottom ? ", continues past the visible end" : ""}${hasConflict ? ", scheduling conflict" : ""}${b.members.length > 1 ? `, merged block of ${b.members.length}` : ""}`}
       >
         <div className="resize-handle top" data-edge="top" aria-hidden="true" />
         <div className="block-row">
