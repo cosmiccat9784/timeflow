@@ -1,27 +1,33 @@
 import { describe, expect, it } from "vitest";
 import { daysUntil, relativeLabel, sortByNearness } from "./deadlines";
 
-describe("deadline nearness (repeating week, no dates)", () => {
-  it("counts forward to the weekday", () => {
-    expect(daysUntil(1, 1)).toBe(0); // Tuesday → Tuesday
-    expect(daysUntil(1, 2)).toBe(1);
-    expect(daysUntil(1, 0)).toBe(6); // Tuesday → next Monday
-    expect(daysUntil(6, 0)).toBe(1); // Sunday → Monday
+describe("dated deadlines (one-off, calendar-based)", () => {
+  it("counts whole days, negative when overdue", () => {
+    expect(daysUntil("2026-11-03", "2026-11-03")).toBe(0);
+    expect(daysUntil("2026-11-04", "2026-11-03")).toBe(1);
+    expect(daysUntil("2026-10-30", "2026-11-03")).toBe(-4);
   });
 
-  it("labels relative days", () => {
+  it("labels relative days including overdue", () => {
+    expect(relativeLabel(-3)).toBe("Overdue by 3 days");
+    expect(relativeLabel(-1)).toBe("Yesterday · overdue");
     expect(relativeLabel(0)).toBe("Today");
     expect(relativeLabel(1)).toBe("Tomorrow");
-    expect(relativeLabel(4)).toBe("In 4 days");
+    expect(relativeLabel(5)).toBe("In 5 days");
   });
 
-  it("sorts nearest first", () => {
+  it("sorts oldest-overdue first, then today, then future", () => {
     const items = [
-      { weekday: 0 as const, name: "mon" },
-      { weekday: 4 as const, name: "fri" },
-      { weekday: 2 as const, name: "wed" },
+      { date: "2026-11-10", name: "future" },
+      { date: "2026-10-28", name: "old-overdue" },
+      { date: "2026-11-03", name: "today" },
+      { date: "2026-11-01", name: "recent-overdue" },
     ];
-    // Today = Tuesday: Wed (1), Fri (3), Mon (6).
-    expect(sortByNearness(items, 1).map((i) => i.name)).toEqual(["wed", "fri", "mon"]);
+    expect(sortByNearness(items, "2026-11-03").map((i) => i.name)).toEqual([
+      "old-overdue",
+      "recent-overdue",
+      "today",
+      "future",
+    ]);
   });
 });

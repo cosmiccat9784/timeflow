@@ -69,7 +69,7 @@ export async function saveFile(
       await writeFile(path, data);
       return { ok: true };
     } catch (e) {
-      return { ok: false, error: e instanceof Error ? e.message : "TimeFlow could not write the file." };
+      return { ok: false, error: e instanceof Error ? e.message : "Time Flow could not write the file." };
     }
   }
   try {
@@ -82,7 +82,7 @@ export async function saveFile(
     setTimeout(() => URL.revokeObjectURL(url), 5000);
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "TimeFlow could not write the file." };
+    return { ok: false, error: e instanceof Error ? e.message : "Time Flow could not write the file." };
   }
 }
 

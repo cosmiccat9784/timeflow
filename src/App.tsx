@@ -30,6 +30,7 @@ import { TodayView } from "./components/TodayView";
 import { ProgressView } from "./components/ProgressView";
 import { RecapModal, recapToCsv, type RecapData } from "./components/RecapModal";
 import { PrioritiesView } from "./components/PrioritiesView";
+import { todayKey } from "./deadlines";
 
 interface PendingOp {
   label: string;
@@ -140,7 +141,7 @@ export default function App() {
     saveTimer.current = setTimeout(() => {
       const r = saveState(state);
       if (r.ok) setSaveStatus({ kind: "saved", text: `Saved ${new Date().toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit" })}` });
-      else setSaveStatus({ kind: "error", text: "TimeFlow could not save your changes. Keep this window open and export a backup if needed." });
+      else setSaveStatus({ kind: "error", text: "Time Flow could not save your changes. Keep this window open and export a backup if needed." });
     }, 400);
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [state]);
@@ -599,7 +600,7 @@ export default function App() {
   };
 
   const doRestore = async () => {
-    const f = await pickFile(["json"], "TimeFlow backup");
+    const f = await pickFile(["json"], "Time Flow backup");
     if (!f) return;
     const parsed = parseBackup(new TextDecoder().decode(f.data));
     if (!parsed.ok) {
@@ -745,7 +746,7 @@ export default function App() {
 
   const testNotification = () => {
     setToast({ message: "Test notification sent — check your system notifications and the banner here." });
-    void tryNotify("TimeFlow", "Notifications are working on this device.");
+    void tryNotify("Time Flow", "Notifications are working on this device.");
   };
 
   // ---------- weekly rollover (V2 §22) ----------
@@ -816,12 +817,12 @@ export default function App() {
   const withDeadlines = (next: Deadline[], base: Timetable[] = timetables): Timetable[] =>
     base.map((t) => (t.id === active.id ? { ...t, deadlines: next } : t));
 
-  const addDeadline = (draft: { title: string; weekday: Weekday; subject: string; notes: string }) => {
+  const addDeadline = (draft: { title: string; date: string; subject: string; notes: string }) => {
     const t = nowIso();
     const d: Deadline = {
       id: uid("dl"),
       title: draft.title.trim(),
-      weekday: draft.weekday,
+      date: draft.date,
       subject: draft.subject.trim() || undefined,
       notes: draft.notes.trim() || undefined,
       createdAt: t,
@@ -845,6 +846,15 @@ export default function App() {
     const err = commit({ timetables: withDeadlines(deadlines.filter((d) => d.id !== id)), categories }, `Deleted deadline ${found?.title ?? ""}`);
     if (err) setToast({ message: err });
     else notify({ message: "Deadline deleted.", undoLabel: "Undo", onUndo: doUndo });
+  };
+
+  const clearPastDeadlines = () => {
+    const today = todayKey();
+    const past = deadlines.filter((d) => d.date < today);
+    if (past.length === 0) return;
+    const err = commit({ timetables: withDeadlines(deadlines.filter((d) => d.date >= today)), categories }, `Cleared ${past.length} past deadline${past.length === 1 ? "" : "s"}`);
+    if (err) setToast({ message: err });
+    else notify({ message: "Past deadlines cleared.", undoLabel: "Undo", onUndo: doUndo });
   };
 
   // ---------- editor ----------
@@ -901,10 +911,8 @@ export default function App() {
   // ---------- sample / clear ----------
 
   const createSample = () => {
-    const t = nowIso();
-    const dls: Deadline[] = sampleDeadlines().map((d) => ({ ...d, id: uid("dl"), createdAt: t, updatedAt: t }));
     const err = commit(
-      { timetables: timetables.map((x) => (x.id === active.id ? { ...x, activities: sampleActivities(), deadlines: dls } : x)), categories },
+      { timetables: timetables.map((x) => (x.id === active.id ? { ...x, activities: sampleActivities(), deadlines: sampleDeadlines() } : x)), categories },
       "Created sample timetable",
     );
     if (err) setToast({ message: err });
@@ -948,7 +956,7 @@ export default function App() {
   return (
     <div className={`app${focusMode ? " focus" : ""}`}>
       <aside className="sidebar" aria-label="Planner navigation">
-        <div className="brand">TimeFlow<small>weekly timetable</small></div>
+        <div className="brand">Time Flow<small>weekly timetable</small></div>
         <div className="field" style={{ marginBottom: 0 }}>
           <label htmlFor="tt-switch">Timetable</label>
           <select id="tt-switch" value={active.id} onChange={(e) => switchTimetable(e.target.value)}>
@@ -1105,7 +1113,6 @@ export default function App() {
               swapArmed={swapFrom !== null}
               completedIds={completedIds}
               timerActivityId={timer && timer.timetableId === active.id ? timer.activityId : null}
-              deadlines={deadlines}
               onQuickSwitch={doQuickSwitch}
               onSelectBlock={(k) => setSelectedKey(k)}
               onOpenMenu={(m) => { setMenu(m); setSelectedKey(m.block.key); }}
@@ -1148,10 +1155,10 @@ export default function App() {
             <PrioritiesView
               deadlines={deadlines}
               subjects={existingSubjects}
-              today={today}
               onAdd={addDeadline}
               onUpdate={updateDeadline}
               onDelete={deleteDeadline}
+              onClearPast={clearPastDeadlines}
             />
           </div>
         ) : (
@@ -1250,7 +1257,7 @@ export default function App() {
           <div className="modal" role="alertdialog" aria-modal="true" aria-label="Scheduling conflict" aria-describedby="conflict-desc">
             <h2>These activities overlap</h2>
             <p id="conflict-desc">{pending.conflicts}</p>
-            <p className="derived">TimeFlow keeps overlaps visible and counts shared time once. Choose how to proceed — nothing has changed yet.</p>
+            <p className="derived">Time Flow keeps overlaps visible and counts shared time once. Choose how to proceed — nothing has changed yet.</p>
             <div className="modal-actions">
               <button
                 type="button"

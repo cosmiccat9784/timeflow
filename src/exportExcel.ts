@@ -33,7 +33,7 @@ export async function timetableToXlsx(
   categories: Category[],
 ): Promise<Uint8Array> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "TimeFlow";
+  wb.creator = "Time Flow";
   const ws = wb.addWorksheet("Timetable");
   const catOf = (id: string) => categories.find((c) => c.id === id);
 

@@ -1,9 +1,9 @@
 {
-  "name": "timeflow",
+  "name": "time-flow",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "module",
-  "description": "TimeFlow — visual weekly timetable planner (Tauri 2 desktop app)",
+  "description": "Time Flow — visual weekly timetable planner (Tauri 2 desktop app)",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

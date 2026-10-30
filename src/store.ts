@@ -1,9 +1,10 @@
 import type { Category, GlobalSettings, PersistedState, Timetable, Weekday } from "./types";
 import { SCHEMA_VERSION, STORAGE_KEY, nowIso, uid } from "./types";
 import { DEFAULT_CATEGORIES, DEFAULT_SWITCH_PAIR, LEGACY_CATEGORY_NAMES } from "./categories";
+import { nextWeekdayDate } from "./deadlines";
 import { validateActivity, validateCategories, validateDeadline } from "./validation";
 
-export const APP_VERSION = "0.3.0";
+export const APP_VERSION = "0.3.1";
 
 export function defaultSettings(): GlobalSettings {
   const darkOS = typeof window !== "undefined" && !!window.matchMedia?.("(prefers-color-scheme: dark)").matches;
@@ -70,7 +71,10 @@ export function migrateState(raw: unknown): PersistedState | null {
   if (typeof raw !== "object" || raw === null) return null;
   const r = raw as Record<string, unknown>;
   try {
-    if (r.schemaVersion === SCHEMA_VERSION || r.schemaVersion === 2) {
+    // v4 (current), v3 and v2 share the multi-timetable shape. v3 stored
+    // weekday-pinned deadlines; v4 stores calendar dates — map old pins
+    // to their next occurrence so nothing silently vanishes.
+    if (r.schemaVersion === SCHEMA_VERSION || r.schemaVersion === 3 || r.schemaVersion === 2) {
       const s = r as unknown as PersistedState;
       if (!Array.isArray(s.timetables) || s.timetables.length === 0) return null;
       if (!Array.isArray(s.categories)) return null;
@@ -87,10 +91,18 @@ export function migrateState(raw: unknown): PersistedState | null {
         s.activeTimetableId = s.timetables[0].id;
       for (const t of s.timetables) {
         if (!Array.isArray(t.deadlines)) t.deadlines = [];
+        if (r.schemaVersion === 3) {
+          for (const d of t.deadlines as unknown as Record<string, unknown>[]) {
+            if (typeof d.date !== "string" && Number.isInteger(d.weekday)) {
+              d.date = nextWeekdayDate(d.weekday as Weekday);
+              delete d.weekday;
+            }
+          }
+        }
       }
       return sanitizeState(s);
     }
-    // v1 → v3: wrap the single timetable, add records/restore/timer fields.
+    // v1 → v4: wrap the single timetable, add records/restore/timer fields.
     if (r.schemaVersion === 1) {
       const v1 = r as unknown as {
         timetable?: Timetable; categories?: Category[]; settings?: Partial<GlobalSettings>; subjects?: string[]
@@ -155,7 +167,7 @@ export function saveState(state: PersistedState): SaveResult {
     localStorage.setItem(STORAGE_KEY, text);
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "TimeFlow could not save your changes." };
+    return { ok: false, error: e instanceof Error ? e.message : "Time Flow could not save your changes." };
   }
 }
 

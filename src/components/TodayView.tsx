@@ -1,4 +1,5 @@
 import type { Activity, Category, ClockFormat, Deadline, TimerState, Weekday, WeekRecord } from "../types";
+import { daysUntil, relativeLabel, todayKey } from "../deadlines";
 import { WEEKDAY_NAMES, displayName } from "../types";
 import { formatTime, formatDuration } from "../time";
 import { categoryById } from "../categories";
@@ -120,23 +121,27 @@ export function TodayView({
         </div>
       </div>
 
-      {deadlines.filter((d) => d.weekday === today).length > 0 && (
-        <>
-          <h3>Due today</h3>
-          <ul className="timeline">
-            {deadlines.filter((d) => d.weekday === today).map((d) => (
-              <li key={d.id} className="today-row">
-                <span aria-hidden="true">📌</span>
-                <span className="today-main">
-                  <strong>{d.title}</strong>
-                  {d.subject && <span className="derived"> · {d.subject}</span>}
-                  {d.notes && <span className="derived"> — {d.notes}</span>}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+      {(() => {
+        const now = todayKey();
+        const due = deadlines.filter((d) => d.date <= now).sort((a, b) => (a.date < b.date ? -1 : 1));
+        if (due.length === 0) return null;
+        return (
+          <>
+            <h3>Due</h3>
+            <ul className="timeline">
+              {due.map((d) => (
+                <li key={d.id} className="today-row">
+                  <span aria-hidden="true">📌</span>
+                  <span className="today-main">
+                    <strong>{d.title}</strong>
+                    <span className="derived"> {relativeLabel(daysUntil(d.date, now))}{d.subject ? ` · ${d.subject}` : ""}{d.notes ? ` — ${d.notes}` : ""}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
+        );
+      })()}
 
       <h3>Timeline</h3>
       {todays.length === 0 ? (

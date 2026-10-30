@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type * as React from "react";
-import type { Category, ClockFormat, Deadline, GlobalSettings, Weekday } from "../types";
+import type { Category, ClockFormat, GlobalSettings, Weekday } from "../types";
 import { WEEKDAY_NAMES, WEEKDAY_SHORT, displayName } from "../types";
 import { SLOT, clampDay, formatDuration, formatTime, snapToSlot } from "../time";
 import type { MergedBlock } from "../merge";
@@ -59,7 +59,6 @@ export function PlannerGrid({
   swapArmed,
   completedIds,
   timerActivityId,
-  deadlines,
   onToggleCompleteBlock,
   onQuickSwitch,
   onSelectBlock,
@@ -88,7 +87,6 @@ export function PlannerGrid({
   swapArmed: boolean;
   completedIds: Set<string>;
   timerActivityId: string | null;
-  deadlines: Deadline[];
   onToggleCompleteBlock: (block: MergedBlock) => void;
   onQuickSwitch: (block: MergedBlock) => void;
   onSelectBlock: (key: string | null) => void;
@@ -583,11 +581,6 @@ export function PlannerGrid({
               📚 {formatDuration(dayMinutes[d].study)}
               {dayMinutes[d].optionalWork > 0 && ` · 💼 ${formatDuration(dayMinutes[d].optionalWork)}`}
             </div>
-            {deadlines.filter((dl) => dl.weekday === d).map((dl) => (
-              <div key={dl.id} className="deadline-chip" title={dl.notes || dl.subject || "Deadline"}>
-                📌 {dl.title}
-              </div>
-            ))}
           </div>
         ))}
       </div>

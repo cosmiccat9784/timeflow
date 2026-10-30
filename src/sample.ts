@@ -1,5 +1,6 @@
 import type { Activity, Deadline, Weekday } from "./types";
 import { nowIso, uid } from "./types";
+import { nextWeekdayDate } from "../deadlines";
 
 function base(
   name: string,
@@ -54,7 +55,7 @@ function sampleDeadline(
   notes?: string,
 ): Deadline {
   const t = nowIso();
-  return { id: uid("dl"), title, weekday, subject, notes, createdAt: t, updatedAt: t };
+  return { id: uid("dl"), title, date: nextWeekdayDate(weekday), subject, notes, createdAt: t, updatedAt: t };
 }
 
 // A couple of example deadlines so Priorities isn't empty on first run.

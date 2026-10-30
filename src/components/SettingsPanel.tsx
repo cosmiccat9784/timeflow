@@ -186,7 +186,7 @@ export function SettingsPanel({
           <span>Notifications</span>
           <button type="button" className="btn" onClick={onTestNotification}>Send test notification</button>
         </div>
-        <p className="derived">Reminders appear in-app while TimeFlow runs, plus a system notification where the OS allows it. Delivery limits per platform are honest: background delivery with the app fully closed is not guaranteed.</p>
+        <p className="derived">Reminders appear in-app while Time Flow runs, plus a system notification where the OS allows it. Delivery limits per platform are honest: background delivery with the app fully closed is not guaranteed.</p>
 
         <h3>Restore points</h3>
         {restorePoints.length === 0 ? (
@@ -203,7 +203,7 @@ export function SettingsPanel({
         )}
 
         <div className="settings-row">
-          <span>TimeFlow version</span>
+          <span>Time Flow version</span>
           <span>{APP_VERSION} · schema v2 · English (Australia), week starts Monday</span>
         </div>
 

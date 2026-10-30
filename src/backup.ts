@@ -42,7 +42,7 @@ export function parseBackup(text: string): { ok: true; data: BackupData } | { ok
   if (typeof raw !== "object" || raw === null) return { ok: false, error: "The backup file is not compatible with this version." };
   const b = raw as Record<string, unknown>;
   if (b.schemaVersion !== SCHEMA_VERSION) {
-    return { ok: false, error: `Unsupported backup version (${String(b.schemaVersion)}). TimeFlow needs schema v${SCHEMA_VERSION}.` };
+    return { ok: false, error: `Unsupported backup version (${String(b.schemaVersion)}). Time Flow needs schema v${SCHEMA_VERSION}.` };
   }
   const data = b as unknown as BackupData;
   if (!Array.isArray(data.timetables) || data.timetables.length === 0)

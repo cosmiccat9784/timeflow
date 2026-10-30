@@ -64,14 +64,20 @@ export function validateCategories(categories: Category[]): ValidationError[] {
 
 /**
  * Validate a deadline for commit. Titles are required (unlike activities,
- * there is no category to fall back on).
+ * there is no category to fall back on); dates must be real calendar days.
  */
-export function validateDeadline(d: { title: string; weekday: number }): ValidationError[] {
+export function validateDeadline(d: { title: string; date: string }): ValidationError[] {
   const errors: ValidationError[] = [];
   if (!d.title || !d.title.trim())
     errors.push({ field: "title", message: "Deadline title is required." });
-  if (!Number.isInteger(d.weekday) || d.weekday < 0 || d.weekday > 6)
-    errors.push({ field: "weekday", message: "Weekday must be Monday–Sunday." });
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d.date || "")) {
+    errors.push({ field: "date", message: "Deadline needs a valid calendar date." });
+  } else {
+    const [y, m, day] = d.date.split("-").map(Number);
+    const dt = new Date(y, m - 1, day);
+    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== day)
+      errors.push({ field: "date", message: "Deadline needs a valid calendar date." });
+  }
   return errors;
 }
 

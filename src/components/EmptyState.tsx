@@ -6,7 +6,7 @@ export function EmptyState({ onCreateSample, onImport }: { onCreateSample: () =>
       <div className="art" aria-hidden="true">🗓️</div>
       <h2>Plan your week, visually</h2>
       <p>
-        TimeFlow is a repeating Monday-to-Sunday timetable. Create activities in
+        Time Flow is a repeating Monday-to-Sunday timetable. Create activities in
         15-minute blocks, double-click Study ↔ Personal to switch instantly, and see
         study totals update as you plan.
       </p>

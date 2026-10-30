@@ -1,11 +1,11 @@
-# TimeFlow — visual weekly timetable planner
+# Time Flow — visual weekly timetable planner
 
 Tauri 2 desktop app (Windows, macOS, Linux) for planning a **repeating
 Monday-to-Sunday timetable** in 15-minute blocks. Editing feels immediate and
 visual: click to select, double-click Study ↔ Personal to switch, drag to move,
 resize from the edges, right-click / long-press for every category.
 
-> Full product specification: see the handover document (TimeFlow product
+> Full product specification: see the handover document (Time Flow product
 > spec, §§1–31). This repo implements **MVP + V1 + V2** (version 0.2.0).
 > Owner-directed deviations from the spec are listed under “Deviations” below.
 
@@ -122,10 +122,11 @@ src-tauri/
 
 ## V1 — import, export, management (done, 0.2.0)
 
-- Deadlines (0.3.0): all-day exam/assignment entries pinned to weekdays, planner
-  chips, a Priorities tab ordered nearest-first (days-until within the
-  repeating week — no calendar dates), Today "due today" list, JSON backup
-  included, per-timetable with undo support.
+- Deadlines (0.3.0+, dated since 0.3.1): all-day exam/assignment entries with
+  real calendar dates — no repeating weekday pins. The Priorities tab orders
+  them nearest-first (overdue, today, future) with a clear-past action; Today
+  shows what's due; schema v3 weekday pins auto-migrate to their next
+  occurrence. Per-timetable, undoable, in JSON backups.
 
 - [x] Excel import tuned to the real reference workbook (weekday/weekend sections, repeated-cell runs, legend fills, summary exclusion, fuzzy days, PM assumption flagged)
 - [x] CSV import into the same guided preview
