@@ -1,6 +1,6 @@
 import type { Activity, Deadline, Weekday } from "./types";
 import { nowIso, uid } from "./types";
-import { nextWeekdayDate } from "../deadlines";
+import { nextWeekdayDate } from "./deadlines";
 
 function base(
   name: string,
