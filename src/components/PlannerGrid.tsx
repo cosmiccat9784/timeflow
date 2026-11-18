@@ -479,10 +479,10 @@ export function PlannerGrid({
         style={{
           top,
           height: h,
-          background: cat?.colour ?? "#eee",
           left: `calc(${leftPct}% + 3px)`,
           width: `calc(${widthPct}% - 6px)`,
-        }}
+          ["--cat" as unknown as string]: cat?.colour ?? "var(--accent-orange)",
+        } as React.CSSProperties}
         role="group"
         aria-label={`${label}, ${WEEKDAY_NAMES[b.weekday]} ${formatTime(b.startTime, clockFormat)} to ${formatTime(b.endTime, clockFormat)}, ${cat?.name ?? "unknown category"}${continuesTop ? ", continues before the visible start" : ""}${continuesBottom ? ", continues past the visible end" : ""}${hasConflict ? ", scheduling conflict" : ""}${b.members.length > 1 ? `, merged block of ${b.members.length}` : ""}`}
       >

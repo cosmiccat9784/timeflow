@@ -1,18 +1,17 @@
 import type { Category } from "./types";
 
-// Spec §7.2 default categories. Colours are soft pastels with dark text.
-// Labels stay general (Sport, not Sports/Swimming) — specifics belong in
-// the activity name, notes or subject, not the category.
+// Spec §7.2 default categories — colours match the new Morgen-inspired
+// activity palette (green/blue/purple/red/orange) with a dark-card + stripe look.
 export const DEFAULT_CATEGORIES: Category[] = [
-  { id: "study", name: "Study", colour: "#FFF3B0", icon: "📚", countsTowardStudy: true, countsTowardOptionalWork: false },
-  { id: "personal", name: "Personal", colour: "#B2DFDB", icon: "🌿", countsTowardStudy: false, countsTowardOptionalWork: false },
-  { id: "transport", name: "Transport", colour: "#BBDEFB", icon: "🚌", countsTowardStudy: false, countsTowardOptionalWork: false },
-  { id: "sports", name: "Sport", colour: "#FFCC80", icon: "🏊", countsTowardStudy: false, countsTowardOptionalWork: false },
-  { id: "band", name: "Extracurricular", colour: "#B9F6CA", icon: "🎵", countsTowardStudy: false, countsTowardOptionalWork: false },
-  { id: "rest", name: "Rest", colour: "#D1C4E9", icon: "😴", countsTowardStudy: false, countsTowardOptionalWork: false },
-  { id: "work", name: "Work", colour: "#FFE082", icon: "💼", countsTowardStudy: false, countsTowardOptionalWork: true },
-  { id: "meals", name: "Meals", colour: "#F5F5F5", icon: "🍽️", countsTowardStudy: false, countsTowardOptionalWork: false },
-  { id: "other", name: "Other", colour: "#E0E0E0", icon: "▫️", countsTowardStudy: false, countsTowardOptionalWork: false },
+  { id: "study", name: "Study", colour: "#65D84A", icon: "📚", countsTowardStudy: true, countsTowardOptionalWork: false },
+  { id: "personal", name: "Personal", colour: "#168FE5", icon: "🌿", countsTowardStudy: false, countsTowardOptionalWork: false },
+  { id: "transport", name: "Transport", colour: "#3AA0FF", icon: "🚌", countsTowardStudy: false, countsTowardOptionalWork: false },
+  { id: "sports", name: "Sport", colour: "#FF940E", icon: "🏊", countsTowardStudy: false, countsTowardOptionalWork: false },
+  { id: "band", name: "Extracurricular", colour: "#B45AFF", icon: "🎵", countsTowardStudy: false, countsTowardOptionalWork: false },
+  { id: "rest", name: "Rest", colour: "#F04444", icon: "😴", countsTowardStudy: false, countsTowardOptionalWork: false },
+  { id: "work", name: "Work", colour: "#C792FF", icon: "💼", countsTowardStudy: false, countsTowardOptionalWork: true },
+  { id: "meals", name: "Meals", colour: "#858585", icon: "🍽️", countsTowardStudy: false, countsTowardOptionalWork: false },
+  { id: "other", name: "Other", colour: "#555555", icon: "▫️", countsTowardStudy: false, countsTowardOptionalWork: false },
 ];
 
 /** Previous default names, so stored timetables can adopt the new labels
