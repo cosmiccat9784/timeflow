@@ -181,13 +181,14 @@ export default function App() {
   useEffect(() => {
     if (!fileMenuOpen) return;
     const onDown = (e: MouseEvent) => {
-      const el = (e.target as HTMLElement).closest("[data-file-menu]");
-      if (!el) setFileMenuOpen(false);
+      const target = e.target as HTMLElement;
+      if (target.closest("[data-file-menu]")) return;
+      setFileMenuOpen(false);
     };
     const onKey2 = (e: KeyboardEvent) => { if (e.key === "Escape") setFileMenuOpen(false); };
-    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("click", onDown);
     window.addEventListener("keydown", onKey2);
-    return () => { window.removeEventListener("pointerdown", onDown); window.removeEventListener("keydown", onKey2); };
+    return () => { window.removeEventListener("click", onDown); window.removeEventListener("keydown", onKey2); };
   }, [fileMenuOpen]);
 
   // ---------- derived ----------
