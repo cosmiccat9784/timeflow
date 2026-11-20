@@ -561,3 +561,44 @@ button { cursor: pointer; }
 .timer-name { font-weight: 650; }
 .timer-elapsed { font-size: 20px; font-variant-numeric: tabular-nums; }
 .timer-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ---------- Print — clean timetable only ---------- */
+@media print {
+  @page { size: landscape; margin: 8mm; }
+  html, body { background: #fff !important; color: #111 !important; }
+  .app { height: auto; overflow: visible; background: #fff !important; }
+  .sidebar, .toolbar, .day-tabs, .bottom-tabs, .notice, .toast, .menu, .modal-backdrop, .focus-exit,
+  .timer-bar, .save-status {
+    display: none !important;
+  }
+  .main { overflow: visible; }
+  .grid-wrap { overflow: visible; padding: 0; background: #fff !important; }
+  .grid { gap: 4px; }
+  .day-head {
+    background: #f2f2f2 !important; color: #111 !important;
+    border: 1px solid #ccc !important;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .day-col { background: #fff !important; border: 1px solid #ddd !important; }
+  .slot-line { border-color: #eee !important; }
+  .slot-line.hour { border-color: #ddd !important; }
+  .time-label { color: #555 !important; }
+  .day-col.today { background: #fff !important; }
+  .block {
+    background: #fff !important; color: #111 !important;
+    border: 1px solid #ccc !important;
+    border-left: 4px solid var(--cat, #FF940E) !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .block .bmeta { color: #555 !important; }
+  .now-line, .create-preview, .drag-preview, .resize-handle { display: none !important; }
+  .dash, .empty { display: none !important; }
+  /* Show a print header from the timetable name */
+  .main::before {
+    content: attr(data-print-title);
+    display: block;
+    font-size: 18px; font-weight: 700; color: #111;
+    padding: 8px 0 10px; text-align: center;
+  }
+}

@@ -987,6 +987,7 @@ export default function App() {
           <button type="button" className="nav-btn" onClick={doRestore}>↩ Restore…</button>
         </div>
         <div className="nav-group">
+          <button type="button" className="nav-btn" onClick={() => window.print()}>🖨 Print…</button>
           <button type="button" className="nav-btn" onClick={() => setCatOpen(true)}>🏷 Categories</button>
           <button type="button" className="nav-btn" onClick={() => setSettingsOpen(true)}>⚙ Settings</button>
           <button
@@ -1020,7 +1021,7 @@ export default function App() {
         )}
       </aside>
 
-      <div className="main">
+      <div className="main" data-print-title={`${active.name} — Week of ${new Date().toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}`}>
         <div className="toolbar" role="toolbar" aria-label="Planner toolbar">
           <h1>{screen === "planner" ? active.name : screen === "today" ? "Today" : screen === "priorities" ? "Priorities" : "Progress"}</h1>
           {screen === "planner" && (
@@ -1051,6 +1052,7 @@ export default function App() {
           )}
           <button type="button" className="btn" onClick={doUndo} disabled={!undoRef.current.canUndo} title="Undo (Ctrl+Z)">↩</button>
           <button type="button" className="btn" onClick={doRedo} disabled={!undoRef.current.canRedo} title="Redo">↪</button>
+          <button type="button" className="btn" onClick={() => window.print()} title="Print timetable (Ctrl+P)">🖨</button>
           <button type="button" className="btn" onClick={() => setFocusMode((v) => !v)} title="Focus mode — timetable only (F11)">⛶</button>
           <button type="button" className="btn" onClick={() => setSettingsOpen(true)}>⚙</button>
         </div>
