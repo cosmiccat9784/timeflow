@@ -64,6 +64,7 @@ export default function App() {
   const [nowMin, setNowMin] = useState(() => minutesNow());
   const [epochMs, setEpochMs] = useState(() => Date.now());
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [menu, setMenu] = useState<MenuRequest | null>(null);
   const [emptyMenu, setEmptyMenu] = useState<EmptySlotRequest | null>(null);
   const [editor, setEditor] = useState<EditorDraft | null>(null);
@@ -1127,6 +1128,7 @@ export default function App() {
               today={today}
               nowMinutes={nowMin}
               selectedBlockKey={selectedKey}
+              selectedKeys={selectedKeys}
               conflictIds={conflictIds}
               lanesByDay={lanesByDay}
               dayMinutes={days}
@@ -1134,7 +1136,15 @@ export default function App() {
               completedIds={completedIds}
               timerActivityId={timer && timer.timetableId === active.id ? timer.activityId : null}
               onQuickSwitch={doQuickSwitch}
-              onSelectBlock={(k) => setSelectedKey(k)}
+              onSelectBlock={(k, e) => {
+              if (e && (e as any).shiftKey) {
+                setSelectedKeys(prev => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+                setSelectedKey(k);
+              } else {
+                setSelectedKeys(new Set([k]));
+                setSelectedKey(k);
+              }
+            }}
               onOpenMenu={(m) => { setMenu(m); setSelectedKey(m.block.key); }}
               onEmptyMenu={(m: EmptySlotRequest) => setEmptyMenu(m)}
               onCreate={openCreate}
