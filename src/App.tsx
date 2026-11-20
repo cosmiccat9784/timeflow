@@ -75,6 +75,7 @@ export default function App() {
   const [pending, setPending] = useState<PendingOp | null>(null);
   const [swapFrom, setSwapFrom] = useState<string | null>(null);
   const [focusMode, setFocusMode] = useState(false);
+  const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ kind: "saved" | "saving" | "error"; text: string }>({ kind: "saved", text: "Saved" });
   const [showConflicts, setShowConflicts] = useState(false);
   const [recap, setRecap] = useState<RecapData | null>(null);
@@ -175,6 +176,19 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activities, timetables, categories]);
+
+  // Close File menu on outside click
+  useEffect(() => {
+    if (!fileMenuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const el = (e.target as HTMLElement).closest("[data-file-menu]");
+      if (!el) setFileMenuOpen(false);
+    };
+    const onKey2 = (e: KeyboardEvent) => { if (e.key === "Escape") setFileMenuOpen(false); };
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("keydown", onKey2);
+    return () => { window.removeEventListener("pointerdown", onDown); window.removeEventListener("keydown", onKey2); };
+  }, [fileMenuOpen]);
 
   // ---------- derived ----------
 
@@ -956,7 +970,6 @@ export default function App() {
   return (
     <div className={`app${focusMode ? " focus" : ""}`}>
       <aside className="sidebar" aria-label="Planner navigation">
-        <div className="brand">Time Flow<small>weekly timetable</small></div>
         <div className="field" style={{ marginBottom: 0 }}>
           <label htmlFor="tt-switch">Timetable</label>
           <select id="tt-switch" value={active.id} onChange={(e) => switchTimetable(e.target.value)}>
@@ -979,15 +992,7 @@ export default function App() {
           <div className="totals-row"><span>📚 Study</span><strong>{formatDuration(week.study)}</strong></div>
           <div className="totals-row"><span>💼 Optional work</span><strong>{formatDuration(week.optionalWork)}</strong></div>
         </div>
-        <div className="nav-group" role="group" aria-label="Data">
-          <button type="button" className="nav-btn" onClick={() => setImportOpen(true)}>⬆ Import…</button>
-          <button type="button" className="nav-btn" onClick={doExportXlsx}>⬇ Excel</button>
-          <button type="button" className="nav-btn" onClick={doExportCsv}>⬇ CSV</button>
-          <button type="button" className="nav-btn" onClick={doBackup}>💾 Backup</button>
-          <button type="button" className="nav-btn" onClick={doRestore}>↩ Restore…</button>
-        </div>
         <div className="nav-group">
-          <button type="button" className="nav-btn" onClick={() => window.print()}>🖨 Print…</button>
           <button type="button" className="nav-btn" onClick={() => setCatOpen(true)}>🏷 Categories</button>
           <button type="button" className="nav-btn" onClick={() => setSettingsOpen(true)}>⚙ Settings</button>
           <button
@@ -998,10 +1003,6 @@ export default function App() {
           >
             {settings.theme === "dark" ? "☀ Light mode" : "🌙 Dark mode"}
           </button>
-          <button type="button" className="nav-btn" onClick={doUndo} disabled={!undoRef.current.canUndo}>
-            ↩ Undo{undoRef.current.undoLabel ? `: ${undoRef.current.undoLabel}` : ""}
-          </button>
-          <button type="button" className="nav-btn" onClick={doRedo} disabled={!undoRef.current.canRedo}>↪ Redo</button>
         </div>
         <div className={`save-status${saveStatus.kind === "error" ? " error" : ""}`} role="status">{saveStatus.text}</div>
         {conflicts.length > 0 && (
@@ -1023,6 +1024,22 @@ export default function App() {
 
       <div className="main" data-print-title={`${active.name} — Week of ${new Date().toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}`}>
         <div className="toolbar" role="toolbar" aria-label="Planner toolbar">
+          <div className="file-menu" data-file-menu>
+            <button type="button" className="btn" aria-haspopup="menu" aria-expanded={fileMenuOpen} onClick={() => setFileMenuOpen((v) => !v)}>File ▾</button>
+            {fileMenuOpen && (
+              <div className="menu file-dropdown" role="menu">
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); setImportOpen(true); }}>⬇ Import…</button>
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doExportXlsx(); }}>⬆ Excel</button>
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doExportCsv(); }}>⬆ CSV</button>
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doBackup(); }}>💾 Backup</button>
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doRestore(); }}>↩ Restore…</button>
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); window.print(); }}>🖨 Print…</button>
+                <hr />
+                <button type="button" role="menuitem" disabled={!undoRef.current.canUndo} onClick={() => { setFileMenuOpen(false); doUndo(); }}>↩ Undo{undoRef.current.undoLabel ? `: ${undoRef.current.undoLabel}` : ""}</button>
+                <button type="button" role="menuitem" disabled={!undoRef.current.canRedo} onClick={() => { setFileMenuOpen(false); doRedo(); }}>↪ Redo</button>
+              </div>
+            )}
+          </div>
           <h1>{screen === "planner" ? active.name : screen === "today" ? "Today" : screen === "priorities" ? "Priorities" : "Progress"}</h1>
           {screen === "planner" && (
             <>

@@ -174,6 +174,14 @@ button { cursor: pointer; }
   background: var(--bg-toolbar);
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
+  position: relative;
+}
+.file-menu { position: relative; }
+.file-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 65;
 }
 .toolbar h1 { font-size: 16px; margin: 0 8px 0 0; font-weight: 650; color: var(--text-primary); }
 .btn {
@@ -565,15 +573,20 @@ button { cursor: pointer; }
 /* ---------- Print — clean timetable only ---------- */
 @media print {
   @page { size: landscape; margin: 8mm; }
+  html, body, #root, .app { height: auto !important; overflow: visible !important; }
   html, body { background: #fff !important; color: #111 !important; }
-  .app { height: auto; overflow: visible; background: #fff !important; }
-  .sidebar, .toolbar, .day-tabs, .bottom-tabs, .notice, .toast, .menu, .modal-backdrop, .focus-exit,
-  .timer-bar, .save-status {
+  .app { background: #fff !important; }
+  .sidebar, .day-tabs, .bottom-tabs, .notice, .toast, .menu, .modal-backdrop, .focus-exit,
+  .timer-bar, .save-status, .segmented, .btn:not(.file-dropdown .btn) {
     display: none !important;
   }
+  .toolbar { background: #fff !important; border-bottom: 1px solid #ccc !important; justify-content: center; }
+  .toolbar h1 { font-size: 16px !important; }
+  .toolbar .file-menu, .toolbar .btn { display: none !important; }
   .main { overflow: visible; }
-  .grid-wrap { overflow: visible; padding: 0; background: #fff !important; }
-  .grid { gap: 4px; }
+  .grid-wrap { overflow: visible !important; padding: 0 !important; background: #fff !important; max-height: none !important; }
+  .grid { gap: 4px; max-height: none !important; }
+  :root { --slot-h: 10px; }
   .day-head {
     background: #f2f2f2 !important; color: #111 !important;
     border: 1px solid #ccc !important;
@@ -590,6 +603,7 @@ button { cursor: pointer; }
     border-left: 4px solid var(--cat, #FF940E) !important;
     box-shadow: none !important;
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    break-inside: avoid;
   }
   .block .bmeta { color: #555 !important; }
   .now-line, .create-preview, .drag-preview, .resize-handle { display: none !important; }
