@@ -65,7 +65,15 @@
   --shadow: 0 8px 28px rgba(35, 39, 46, 0.14);
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--border) var(--bg-main); }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: var(--bg-main); }
+*::-webkit-scrollbar-thumb { background: #2e2e2e; border-radius: 999px; border: 2px solid var(--bg-main); }
+*::-webkit-scrollbar-thumb:hover { background: var(--accent-orange); }
+[data-theme="light"] * { scrollbar-color: #E6E2D8 #FAFAF7; }
+[data-theme="light"] *::-webkit-scrollbar-track { background: #FAFAF7; }
+[data-theme="light"] *::-webkit-scrollbar-thumb { background: #E6E2D8; border-color: #FAFAF7; }
+[data-theme="light"] *::-webkit-scrollbar-thumb:hover { background: var(--accent-orange); }
 html, body, #root { height: 100%; }
 body {
   margin: 0;
@@ -175,13 +183,15 @@ button { cursor: pointer; }
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
   position: relative;
+  overflow: visible;
 }
 .file-menu { position: relative; }
 .file-dropdown {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 8px);
   left: 0;
-  z-index: 65;
+  z-index: 75;
+  min-width: 220px;
 }
 .toolbar h1 { font-size: 16px; margin: 0 8px 0 0; font-weight: 650; color: var(--text-primary); }
 .btn {
@@ -570,7 +580,31 @@ button { cursor: pointer; }
 .timer-elapsed { font-size: 20px; font-variant-numeric: tabular-nums; }
 .timer-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
-/* ---------- Print — clean timetable only ---------- */
+.custom-select { position: relative; min-width: 140px; flex: 1; }
+.custom-select-trigger {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; min-height: 44px; padding: 9px 12px;
+  background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text-primary); text-align: left; font-size: 14px;
+  transition: border-color 150ms;
+}
+.custom-select-trigger:hover, .custom-select-trigger[aria-expanded="true"] { border-color: var(--accent-orange); }
+.custom-select-arrow { color: var(--text-muted); font-size: 11px; flex: 0 0 auto; }
+.custom-select-list {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: var(--shadow); z-index: 75; max-height: 260px; overflow: auto; padding: 6px;
+}
+.custom-select-list button {
+  display: flex; width: 100%; align-items: center;
+  border: 0; background: transparent; border-radius: 7px;
+  padding: 9px 10px; min-height: 40px; text-align: left;
+  color: var(--text-primary); font-size: 14px;
+}
+.custom-select-list button:hover, .custom-select-list button:focus-visible { background: var(--bg-panel); }
+.custom-select-list button.current { color: var(--accent-orange); font-weight: 700; }
+
+/* Print — clean timetable only */
 @media print {
   @page { size: landscape; margin: 8mm; }
   html, body, #root, .app { height: auto !important; overflow: visible !important; }

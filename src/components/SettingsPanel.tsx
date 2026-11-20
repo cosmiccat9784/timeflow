@@ -1,6 +1,7 @@
 import type { Category, GlobalSettings, RestorePoint } from "../types";
 import { APP_VERSION } from "../store";
 import { formatTime } from "../time";
+import { CustomSelect } from "./CustomSelect";
 
 function timeOptions(): number[] {
   const out: number[] = [];
@@ -47,27 +48,23 @@ export function SettingsPanel({
 
         <div className="settings-row">
           <label htmlFor="set-vis-start">Visible day starts</label>
-          <select
+          <CustomSelect
             id="set-vis-start"
-            value={settings.visibleStartMinutes}
-            onChange={(e) => onChange({ ...settings, visibleStartMinutes: Number(e.target.value) })}
-          >
-            {timeOptions().map((t) => (
-              <option key={t} value={t}>{formatTime(t, settings.clockFormat)}</option>
-            ))}
-          </select>
+            value={String(settings.visibleStartMinutes)}
+            options={timeOptions().map((t) => ({ value: String(t), label: formatTime(t, settings.clockFormat) }))}
+            onChange={(v) => onChange({ ...settings, visibleStartMinutes: Number(v) })}
+            ariaLabel="Visible day starts"
+          />
         </div>
         <div className="settings-row">
           <label htmlFor="set-vis-end">Visible day ends</label>
-          <select
+          <CustomSelect
             id="set-vis-end"
-            value={settings.visibleEndMinutes}
-            onChange={(e) => onChange({ ...settings, visibleEndMinutes: Number(e.target.value) })}
-          >
-            {timeOptions().map((t) => (
-              <option key={t} value={t}>{formatTime(t, settings.clockFormat)}</option>
-            ))}
-          </select>
+            value={String(settings.visibleEndMinutes)}
+            options={timeOptions().map((t) => ({ value: String(t), label: formatTime(t, settings.clockFormat) }))}
+            onChange={(v) => onChange({ ...settings, visibleEndMinutes: Number(v) })}
+            ariaLabel="Visible day ends"
+          />
         </div>
         <p className="derived">Changing the visible range never deletes activities outside it (§3.4).</p>
 
@@ -81,23 +78,22 @@ export function SettingsPanel({
 
         <div className="settings-row">
           <label htmlFor="set-pair-a">Quick-switch pair (§7.4)</label>
-          <div style={{ display: "flex", gap: 6 }}>
-            <select
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <CustomSelect
               id="set-pair-a"
               value={settings.switchPair[0]}
-              onChange={(e) => onChange({ ...settings, switchPair: [e.target.value, settings.switchPair[1]] })}
-            >
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+              options={categories.map((c) => ({ value: c.id, label: c.name }))}
+              onChange={(v) => onChange({ ...settings, switchPair: [v, settings.switchPair[1]] })}
+              ariaLabel="Quick-switch first category"
+            />
             <span aria-hidden="true">⇄</span>
-            <select
+            <CustomSelect
               id="set-pair-b"
-              aria-label="Quick-switch pair, second category"
               value={settings.switchPair[1]}
-              onChange={(e) => onChange({ ...settings, switchPair: [settings.switchPair[0], e.target.value] })}
-            >
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+              options={categories.map((c) => ({ value: c.id, label: c.name }))}
+              onChange={(v) => onChange({ ...settings, switchPair: [settings.switchPair[0], v] })}
+              ariaLabel="Quick-switch second category"
+            />
           </div>
         </div>
 
@@ -123,23 +119,23 @@ export function SettingsPanel({
         <h3>Reminders</h3>
         <div className="settings-row">
           <label htmlFor="set-lead-start">Before start (min)</label>
-          <select
+          <CustomSelect
             id="set-lead-start"
-            value={settings.reminderDefaults.startLead}
-            onChange={(e) => onChange({ ...settings, reminderDefaults: { ...settings.reminderDefaults, startLead: Number(e.target.value) } })}
-          >
-            {[0, 5, 10, 15, 30].map((m) => <option key={m} value={m}>{m}</option>)}
-          </select>
+            value={String(settings.reminderDefaults.startLead)}
+            options={[0, 5, 10, 15, 30].map((m) => ({ value: String(m), label: String(m) }))}
+            onChange={(v) => onChange({ ...settings, reminderDefaults: { ...settings.reminderDefaults, startLead: Number(v) } })}
+            ariaLabel="Before start minutes"
+          />
         </div>
         <div className="settings-row">
           <label htmlFor="set-lead-end">Before end (min)</label>
-          <select
+          <CustomSelect
             id="set-lead-end"
-            value={settings.reminderDefaults.endLead}
-            onChange={(e) => onChange({ ...settings, reminderDefaults: { ...settings.reminderDefaults, endLead: Number(e.target.value) } })}
-          >
-            {[0, 5, 10, 15, 30].map((m) => <option key={m} value={m}>{m}</option>)}
-          </select>
+            value={String(settings.reminderDefaults.endLead)}
+            options={[0, 5, 10, 15, 30].map((m) => ({ value: String(m), label: String(m) }))}
+            onChange={(v) => onChange({ ...settings, reminderDefaults: { ...settings.reminderDefaults, endLead: Number(v) } })}
+            ariaLabel="Before end minutes"
+          />
         </div>
         <div className="settings-row">
           <label htmlFor="set-atend">Reminder at end</label>
