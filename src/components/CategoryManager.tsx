@@ -93,7 +93,7 @@ export function CategoryManager({
                   <td><input value={c.icon} onChange={(e) => patch(c.id, { icon: e.target.value })} aria-label={`Icon for ${c.name}`} size={3} /></td>
                   <td><input value={c.name} onChange={(e) => patch(c.id, { name: e.target.value })} aria-label="Category name" size={16} /></td>
                   <td>
-                    <ColorPicker value={c.colour} onChange={(v) => patch(c.id, { colour: v })} /> patch(c.id, { colour: e.target.value })} aria-label={`Colour for ${c.name}`} />
+                    <ColorPicker value={c.colour} onChange={(v) => patch(c.id, { colour: v })} />
                     <span className="swatch" style={{ background: c.colour, display: "inline-block", width: 16, height: 16, borderRadius: 4, marginLeft: 6, verticalAlign: "middle" }} aria-hidden="true" />
                   </td>
                   <td>
