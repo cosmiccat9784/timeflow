@@ -53,6 +53,7 @@ export function PlannerGrid({
   today,
   nowMinutes,
   selectedBlockKey,
+  selectedKeys,
   conflictIds,
   lanesByDay,
   dayMinutes,
@@ -81,6 +82,7 @@ export function PlannerGrid({
   today: Weekday;
   nowMinutes: number;
   selectedBlockKey: string | null;
+  selectedKeys?: Set<string>;
   conflictIds: Set<string>;
   lanesByDay: Map<number, Map<string, { lane: number; lanes: number }>>;
   dayMinutes: Record<number, { study: number; optionalWork: number }>;
@@ -89,7 +91,7 @@ export function PlannerGrid({
   timerActivityId: string | null;
   onToggleCompleteBlock: (block: MergedBlock) => void;
   onQuickSwitch: (block: MergedBlock) => void;
-  onSelectBlock: (key: string | null) => void;
+  onSelectBlock: (key: string | null, e?: React.MouseEvent | React.PointerEvent) => void;
   onOpenMenu: (m: MenuRequest) => void;
   onEmptyMenu: (m: EmptySlotRequest) => void;
   onCreate: (day: Weekday, start: number, end: number) => void;
@@ -326,11 +328,11 @@ export function PlannerGrid({
     const now = Date.now();
     if (lastTap.current?.key === block.key && now - lastTap.current.at < 400) {
       lastTap.current = null;
-      if (inSwitchPair(block, settings)) onQuickSwitch(block);
-      else onSelectBlock(block.key);
+      if (inSwitchPair(block, settings) && !(e as any).shiftKey) onQuickSwitch(block);
+      else onSelectBlock(block.key, e as any);
     } else {
       lastTap.current = { key: block.key, at: now };
-      onSelectBlock(block.key);
+      onSelectBlock(block.key, e as any);
     }
   };
 
@@ -458,7 +460,7 @@ export function PlannerGrid({
     const hasConflict = b.members.some((m) => conflictIds.has(m.id));
     const isDone = b.members.every((m) => completedIds.has(m.id));
     const hasTimer = b.members.some((m) => m.id === timerActivityId);
-    const isSelected = selectedBlockKey === b.key || kbMove?.key === b.key;
+    const isSelected = selectedBlockKey === b.key || (selectedKeys?.has(b.key) ?? false) || kbMove?.key === b.key;
     // Only study- and optional-work blocks get a checkbox (§7 counting).
     const c = catOf(categories, first.categoryId);
     const tickable = !!c && (c.countsTowardStudy || c.countsTowardOptionalWork);
