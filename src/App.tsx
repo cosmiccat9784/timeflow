@@ -1024,8 +1024,6 @@ export default function App() {
           </button>
         </div>
         <div className={`save-status${saveStatus.kind === "error" ? " error" : ""}`} role="status">{saveStatus.text}</div>
-          </div>
-        )}
       </aside>
 
       <div className="main" data-print-title={`${active.name} — Week of ${new Date().toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}`}>
