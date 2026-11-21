@@ -310,11 +310,29 @@ export function ActivityEditor({
               active={d.timeSet}
               activities={activities}
               clockFormat={clockFormat}
+              visibleStart={visibleStart}
+              visibleEnd={visibleEnd}
               onPick={(startTime, endTime) => setD((prev) => ({ ...prev, startTime, endTime, timeSet: true }))}
+              onClear={() => setD((prev) => ({ ...prev, timeSet: false }))}
             />
           </div>
         ) : (
-          <div className="form-row">
+          <div className="field">
+            <label id="ed-grid-label">Time — tap a square to adjust the time</label>
+            <TimeRangePicker
+              weekday={d.weekday}
+              start={d.startTime}
+              end={d.endTime}
+              active={true}
+              activities={activities.filter(a=>a.id!==d.activityId)}
+              clockFormat={clockFormat}
+              visibleStart={visibleStart}
+              visibleEnd={visibleEnd}
+              onPick={(s,e) => setD(prev=>({...prev, startTime:s, endTime:e}))}
+              onClear={() => {}}
+            />
+          </div>
+          <div className="form-row" style={{display:"none"}}>
             <div className="field">
               <label htmlFor="ed-start">Start (15-min steps)</label>
               <select id="ed-start" value={d.startTime} onChange={(e) => set("startTime", Number(e.target.value))}>
