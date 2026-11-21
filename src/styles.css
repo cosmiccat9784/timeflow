@@ -657,7 +657,7 @@ button { cursor: pointer; }
 input[type="checkbox"],input[type="radio"]{appearance:none;-webkit-appearance:none;width:18px;height:18px;margin:0;background:var(--bg-panel);border:1.5px solid var(--border);display:inline-grid;place-content:center;cursor:pointer;vertical-align:middle}
 input[type="checkbox"]{border-radius:4px} input[type="radio"]{border-radius:50%}
 input[type="checkbox"]:checked{background:var(--accent-orange);border-color:var(--accent-orange)}
-input[type="checkbox"]:checked::after{content:"â";color:#fff;font-size:12px;line-height:1;font-weight:700}
+input[type="checkbox"]:checked::after{content:"✓";color:#fff;font-size:12px;line-height:1;font-weight:700}
 input[type="radio"]:checked{border-color:var(--accent-orange)}
 input[type="radio"]:checked::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent-orange)}
 input[type="time"],input[type="date"],input[type="text"],input[type="number"],textarea{color-scheme:dark;background:var(--bg-panel);color:var(--text-primary);border:1px solid var(--border);border-radius:8px}
