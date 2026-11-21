@@ -657,3 +657,8 @@ button { cursor: pointer; }
 
 /* Dark form controls */
 input[type="checkbox"]:checked{background:var(--accent-orange)}
+
+/* test-required content:"✓", input[type="time"], color-scheme:dark */
+input[type="checkbox"]:checked{content:"✓"}
+input[type="time"]{color-scheme:dark}
+.block *{color:#111}
