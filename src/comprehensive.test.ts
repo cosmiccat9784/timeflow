@@ -77,7 +77,7 @@ describe("totals - spec 12", () => {
     expect(t.study).toBe(60);
   });
   it("weekTotals and allDayTotals", () => {
-    const acts=[act({id:"1",categoryId:"study",weekday:1,startTime:0,endTime:60}),act({id:"2",categoryId:"study",weekday:2,startTime:0,endTime:30})];
+    const acts=[act({id:"1",categoryId:"study",weekday:1,startTime:0,endTime:60}),act({id:"2",categoryId:"study",weekday:2,startTime:60,endTime:90})];
     expect(weekTotals(acts, DEFAULT_CATEGORIES).study).toBe(90);
     expect(allDayTotals(acts, DEFAULT_CATEGORIES)[1].study).toBe(60);
   });
@@ -160,22 +160,22 @@ describe("store migrate", () => {
 });
 
 describe("undo", () => {
-  it("UndoStack push undo redo", () => {
+  it("UndoStack checkpoint undo redo", () => {
     const stack=new UndoStack();
     expect(stack.canUndo).toBe(false);
     const snap={timetables:[defaultTimetable()], categories: DEFAULT_CATEGORIES};
-    stack.push("add", snap);
+    const cur={timetables:[], categories:[]};
+    stack.checkpoint("add", snap);
     expect(stack.canUndo).toBe(true);
-    const popped=stack.undoSnap();
+    const popped=stack.performUndo(cur);
     expect(popped).not.toBeNull();
     expect(stack.canRedo).toBe(true);
-    const redone=stack.redoSnap();
+    const redone=stack.performRedo(snap);
     expect(redone).not.toBeNull();
   });
   it("limit 20", () => {
     const stack=new UndoStack();
-    for(let i=0;i<25;i++) stack.push("op"+i, {timetables:[],categories:[]});
-    // internal undo length should be capped
+    for(let i=0;i<25;i++) stack.checkpoint("op"+i, {timetables:[],categories:[]});
     expect((stack as any).undo.length).toBeLessThanOrEqual(20);
   });
 });
