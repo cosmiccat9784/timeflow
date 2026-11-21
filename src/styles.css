@@ -1,8 +1,8 @@
 /* Inter bundled offline - system fallback */
-/* Time Flow Ã¢ÂÂ Morgen-inspired dark theme (spec) + inverted light variant */
+/* Time Flow — Morgen-inspired dark theme (spec) + inverted light variant */
 
 :root {
-  /* Backgrounds Ã¢ÂÂ dark default */
+  /* Backgrounds — dark default */
   --bg-main: #050505;
   --bg-sidebar: #181818;
   --bg-toolbar: #141414;
@@ -49,7 +49,7 @@
   --font: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
 }
 
-/* Light mode Ã¢ÂÂ invert all blacks to whites */
+/* Light mode — invert all blacks to whites */
 [data-theme="light"] {
   --bg-main: #FAFAF7;
   --bg-sidebar: #FFFFFF;
@@ -99,7 +99,7 @@ button { cursor: pointer; }
   background: var(--bg-main);
 }
 
-/* ---------- Sidebar Ã¢ÂÂ 17%, charcoal, orange active ---------- */
+/* ---------- Sidebar — 17%, charcoal, orange active ---------- */
 .sidebar {
   width: 17%;
   min-width: 240px;
@@ -123,7 +123,7 @@ button { cursor: pointer; }
   gap: 8px;
 }
 .brand::before {
-  content: "Ã°ÂÂÂ";
+  content: "📅";
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -185,8 +185,8 @@ button { cursor: pointer; }
   overflow: visible;
 }
 .file-menu { position: relative; }
-.menu.file-dropdown {
-  position: absolute !important;
+.file-dropdown {
+  position: absolute;
   top: calc(100% + 8px);
   left: 0;
   z-index: 75;
@@ -218,7 +218,7 @@ button { cursor: pointer; }
 .day-tabs button { border: 1px solid var(--border); background: var(--bg-panel); color: var(--text-secondary); border-radius: 999px; padding: 8px 12px; min-height: 44px; white-space: nowrap; }
 .day-tabs button[aria-selected="true"] { background: var(--accent-orange); border-color: var(--accent-orange); color: #fff; font-weight: 650; }
 
-/* ---------- Grid Ã¢ÂÂ dominant workspace ---------- */
+/* ---------- Grid — dominant workspace ---------- */
 .grid-wrap { flex: 1; overflow: auto; position: relative; padding: 10px 14px 24px; background: var(--bg-main); }
 .grid { display: grid; gap: 6px; border: 0; border-radius: 0; background: transparent; overflow: visible; }
 .grid-header { display: contents; }
@@ -267,7 +267,7 @@ button { cursor: pointer; }
   z-index: 6;
 }
 
-/* Activity blocks Ã¢ÂÂ charcoal card + coloured left stripe */
+/* Activity blocks — charcoal card + coloured left stripe */
 .block {
   position: absolute;
   left: 3px; right: 3px;
@@ -435,7 +435,7 @@ button { cursor: pointer; }
 /* Settings */
 .settings-row { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
 
-/* Responsive Ã¢ÂÂ ÃÂ§5.3: below 1024px compact nav, day view default */
+/* Responsive — §5.3: below 1024px compact nav, day view default */
 @media (max-width: 1023px) {
   .sidebar { display: none; }
   .day-tabs { display: flex; }
@@ -603,7 +603,7 @@ button { cursor: pointer; }
 .custom-select-list button:hover, .custom-select-list button:focus-visible { background: var(--bg-panel); }
 .custom-select-list button.current { color: var(--accent-orange); font-weight: 700; }
 
-/* Print Ã¢ÂÂ clean timetable only */
+/* Print — clean timetable only */
 @media print {
   @page { size: A4 landscape; margin: 6mm; }
   html { zoom: 0.75; }
@@ -643,6 +643,7 @@ button { cursor: pointer; }
   .block .bmeta { color: #333 !important; }
   .block .bname, .block .bname *, .block .bicon, .block .done-badge, .block .conflict-dot { color: #111 !important; }
   .block * { color: #111 !important; }
+  .block .bmeta { color: #333 !important; }
   .now-line, .create-preview, .drag-preview, .resize-handle { display: none !important; }
   .dash, .empty { display: none !important; }
   /* Show a print header from the timetable name */
@@ -653,20 +654,3 @@ button { cursor: pointer; }
     padding: 8px 0 10px; text-align: center;
   }
 }
-
-/* Dark form controls */
-input[type="checkbox"],input[type="radio"]{appearance:none;-webkit-appearance:none;width:18px;height:18px;margin:0;background:var(--bg-panel);border:1.5px solid var(--border);display:inline-grid;place-content:center;cursor:pointer;vertical-align:middle}
-input[type="checkbox"]{border-radius:4px} input[type="radio"]{border-radius:50%}
-input[type="checkbox"]:checked{background:var(--accent-orange);border-color:var(--accent-orange)}
-input[type="checkbox"]:checked::after{content:"✓";color:#fff;font-size:12px;line-height:1;font-weight:700}
-input[type="radio"]:checked{border-color:var(--accent-orange)}
-input[type="radio"]:checked::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent-orange)}
-input[type="time"],input[type="date"],input[type="text"],input[type="number"],textarea{color-scheme:dark;background:var(--bg-panel);color:var(--text-primary);border:1px solid var(--border);border-radius:8px}
-[data-theme="light"] input[type="time"],[data-theme="light"] input[type="date"]{color-scheme:light}
-input[type="time"]::-webkit-calendar-picker-indicator,input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7);cursor:pointer; margin-left:4px;}
-input[type="time"] { padding-right: 8px; }
-[data-theme="light"] input[type="time"]::-webkit-calendar-picker-indicator{filter:none}
-input[type="color"]{appearance:none;-webkit-appearance:none;width:32px;height:32px;padding:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg-panel);cursor:pointer}
-input[type="color"]::-webkit-color-swatch-wrapper{padding:0}
-input[type="color"]::-webkit-color-swatch{border:0;border-radius:7px}
-.block.selected{outline:2px solid var(--accent-orange);outline-offset:-2px}
