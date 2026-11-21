@@ -310,15 +310,12 @@ export function ActivityEditor({
               active={d.timeSet}
               activities={activities}
               clockFormat={clockFormat}
-              visibleStart={visibleStart}
-              visibleEnd={visibleEnd}
               onPick={(startTime, endTime) => setD((prev) => ({ ...prev, startTime, endTime, timeSet: true }))}
-              onClear={() => setD((prev) => ({ ...prev, timeSet: false }))}
             />
           </div>
         ) : (
           <div className="field">
-            <label id="ed-grid-label">Time — tap a square to adjust the time</label>
+            <label>Time — tap a square to adjust</label>
             <TimeRangePicker
               weekday={d.weekday}
               start={d.startTime}
