@@ -39,7 +39,7 @@ interface PendingOp {
 }
 
 function describeConflicts(names: Activity[], categories: Category[]): string {
-  const uniq = [...new Set(names.map((a) => `â${displayName(a, categories)}â (${WEEKDAY_SHORT[a.weekday]} ${formatTime(a.startTime)}â${formatTime(a.endTime)})`))];
+  const uniq = [...new Set(names.map((a) => `Ã¢ÂÂ${displayName(a, categories)}Ã¢ÂÂ (${WEEKDAY_SHORT[a.weekday]} ${formatTime(a.startTime)}Ã¢ÂÂ${formatTime(a.endTime)})`))];
   return uniq.slice(0, 4).join("; ") + (uniq.length > 4 ? ` (+${uniq.length - 4} more)` : "");
 }
 
@@ -136,9 +136,9 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wkKey]);
 
-  // Autosave (debounced, non-blocking) â Â§11.4.
+  // Autosave (debounced, non-blocking) Ã¢ÂÂ ÃÂ§11.4.
   useEffect(() => {
-    setSaveStatus({ kind: "saving", text: "Savingâ¦" });
+    setSaveStatus({ kind: "saving", text: "SavingÃ¢ÂÂ¦" });
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       const r = saveState(state);
@@ -148,7 +148,7 @@ export default function App() {
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [state]);
 
-  // Global shortcuts: undo/redo (Â§9.1) + Escape cancels swap mode.
+  // Global shortcuts: undo/redo (ÃÂ§9.1) + Escape cancels swap mode.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "F11") {
@@ -266,7 +266,7 @@ export default function App() {
     commit({ timetables: withActive(nextActivities), categories: nextCategories }, label);
 
   /**
-   * Commit that surfaces overlaps through the conflict prompt (Â§10.2)
+   * Commit that surfaces overlaps through the conflict prompt (ÃÂ§10.2)
    * instead of silently overwriting.
    */
   const commitWithConflictCheck = (
@@ -408,7 +408,7 @@ export default function App() {
       endTime: m.endTime + offset,
       updatedAt: t,
     }));
-    // Day-boundary guard (Â§3.3): never store a cross-midnight activity.
+    // Day-boundary guard (ÃÂ§3.3): never store a cross-midnight activity.
     if (moved.some((m) => m.startTime < 0 || m.endTime > 1440)) {
       setToast({ message: "That move would cross midnight. Activities must stay within one day." });
       return;
@@ -428,7 +428,7 @@ export default function App() {
       return;
     }
     if (start < 0 || end > 1440) {
-      setToast({ message: "Resizing must stay within 00:00â24:00 of the same day." });
+      setToast({ message: "Resizing must stay within 00:00Ã¢ÂÂ24:00 of the same day." });
       return;
     }
     const updated: Activity = { ...member, startTime: start, endTime: end, updatedAt: nowIso() };
@@ -441,7 +441,7 @@ export default function App() {
     commitWithConflictCheck({ timetables: withActive(next), categories }, [updated], `Resized ${nameOf(member)}`);
   };
 
-  /** Atomic swap: each takes the other's start position, keeps own duration (Â§9.6). */
+  /** Atomic swap: each takes the other's start position, keeps own duration (ÃÂ§9.6). */
   const swapBlocks = (aKey: string, bKey: string) => {
     const a = blockByKey.get(aKey);
     const b = blockByKey.get(bKey);
@@ -449,7 +449,7 @@ export default function App() {
     const am = a.members[0];
     const bm = b.members[0];
     if (a.members.length > 1 || b.members.length > 1) {
-      setToast({ message: "Swap works on single activities â split merged blocks first." });
+      setToast({ message: "Swap works on single activities Ã¢ÂÂ split merged blocks first." });
       return;
     }
     const aDur = am.endTime - am.startTime;
@@ -464,7 +464,7 @@ export default function App() {
       const errs = validateActivity(c, categories);
       if (errs.length > 0) {
         setToast({ message: `Swap rejected: ${errs[0].message}` });
-        return; // atomic: nothing changes (Â§9.6, Â§11.3)
+        return; // atomic: nothing changes (ÃÂ§9.6, ÃÂ§11.3)
       }
     }
     const next = activities.map((x) => (x.id === am.id ? a2 : x.id === bm.id ? b2 : x));
@@ -479,7 +479,7 @@ export default function App() {
     setSwapFrom(null);
   };
 
-  // ---------- timetables (V1 Â§18) ----------
+  // ---------- timetables (V1 ÃÂ§18) ----------
 
   const switchTimetable = (id: string) => {
     setSelectedKey(null);
@@ -495,7 +495,7 @@ export default function App() {
     if (err) setToast({ message: err });
     else {
       setState((s) => ({ ...s, activeTimetableId: tt.id }));
-      notify({ message: `Created â${tt.name}â.`, undoLabel: "Undo", onUndo: doUndo });
+      notify({ message: `Created Ã¢ÂÂ${tt.name}Ã¢ÂÂ.`, undoLabel: "Undo", onUndo: doUndo });
     }
   };
 
@@ -514,7 +514,7 @@ export default function App() {
       setToast({ message: "Keep at least one timetable." });
       return;
     }
-    if (!window.confirm(`Delete timetable â${active.name}â with its ${activities.length} activities? Categories are shared and stay.`)) return;
+    if (!window.confirm(`Delete timetable Ã¢ÂÂ${active.name}Ã¢ÂÂ with its ${activities.length} activities? Categories are shared and stay.`)) return;
     const rest = timetables.filter((t) => t.id !== active.id);
     const err = commit({ timetables: rest, categories }, `Deleted timetable ${active.name}`);
     if (err) setToast({ message: err });
@@ -524,7 +524,7 @@ export default function App() {
     }
   };
 
-  // ---------- categories (V1 Â§7.6) ----------
+  // ---------- categories (V1 ÃÂ§7.6) ----------
 
   const saveCategories = (next: Category[], remap: Record<string, string>): string | null => {
     const mapped = timetables.map((t) => ({
@@ -540,14 +540,14 @@ export default function App() {
     return null;
   };
 
-  // ---------- import / export / backup (V1 Â§Â§16â17) ----------
+  // ---------- import / export / backup (V1 ÃÂ§ÃÂ§16Ã¢ÂÂ17) ----------
 
   const handleImportResult = (r: ImportResult) => {
     setImportOpen(false);
     pushRestorePoint(`Before import ${r.fileName}`);
     if (r.mode === "new") {
       const tt = { id: uid("tt"), name: r.newName, activities: r.activities, deadlines: [] as Deadline[] };
-      const err = commit({ timetables: [...timetables, tt], categories }, `Imported ${r.imported} into â${tt.name}â`);
+      const err = commit({ timetables: [...timetables, tt], categories }, `Imported ${r.imported} into Ã¢ÂÂ${tt.name}Ã¢ÂÂ`);
       if (err) {
         setToast({ message: err });
         return;
@@ -654,7 +654,7 @@ export default function App() {
     }
   };
 
-  // ---------- completion + timer (V2 Â§20) ----------
+  // ---------- completion + timer (V2 ÃÂ§20) ----------
 
   const patchRecord = (rec: WeekRecord) =>
     setState((s) => ({
@@ -679,7 +679,7 @@ export default function App() {
   const startTimer = (activityId: string) => {
     const s = stateRef.current;
     if (s.activeTimer?.running) {
-      setToast({ message: "A timer is already running â finish or skip it first." });
+      setToast({ message: "A timer is already running Ã¢ÂÂ finish or skip it first." });
       return;
     }
     const a = activities.find((x) => x.id === activityId);
@@ -731,7 +731,7 @@ export default function App() {
     say("Timer discarded");
   };
 
-  // ---------- reminders (V2 Â§21) ----------
+  // ---------- reminders (V2 ÃÂ§21) ----------
 
   const tryNotify = async (title: string, body: string) => {
     try {
@@ -755,17 +755,17 @@ export default function App() {
       deliveredSession.current.add(d.key);
       const rec = stateRef.current.weekRecords[recordKey(tt.id, currentWeekId())] ?? freshWeekRecord(tt.id, currentWeekId());
       patchRecord(withDelivered(rec, d.key));
-      setToast({ message: `${d.title} â ${d.body}` });
+      setToast({ message: `${d.title} Ã¢ÂÂ ${d.body}` });
       void tryNotify(d.title, d.body);
     }
   };
 
   const testNotification = () => {
-    setToast({ message: "Test notification sent â check your system notifications and the banner here." });
+    setToast({ message: "Test notification sent Ã¢ÂÂ check your system notifications and the banner here." });
     void tryNotify("Time Flow", "Notifications are working on this device.");
   };
 
-  // ---------- weekly rollover (V2 Â§22) ----------
+  // ---------- weekly rollover (V2 ÃÂ§22) ----------
 
   const checkRollover = () => {
     const s = stateRef.current;
@@ -846,7 +846,7 @@ export default function App() {
     };
     const err = commit({ timetables: withDeadlines([...deadlines, d]), categories }, `Added deadline ${d.title}`);
     if (err) setToast({ message: err });
-    else notify({ message: `Added â${d.title}â.`, undoLabel: "Undo", onUndo: doUndo });
+    else notify({ message: `Added Ã¢ÂÂ${d.title}Ã¢ÂÂ.`, undoLabel: "Undo", onUndo: doUndo });
   };
 
   const updateDeadline = (id: string, patch: Partial<Deadline>) => {
@@ -875,7 +875,7 @@ export default function App() {
 
   // ---------- editor ----------
 
-  /** + New button: no preset time â the grid picker starts blank and the
+  /** + New button: no preset time Ã¢ÂÂ the grid picker starts blank and the
    *  user's taps become the time. Slot-based creation (click/drag/right-
    *  click) keeps prefilling from the exact slot tapped. */
   const smartCreate = () => {
@@ -918,7 +918,7 @@ export default function App() {
     const updated: Activity = { ...activity, createdAt: prev?.createdAt ?? activity.createdAt, updatedAt: nowIso() };
     const next = activities.map((x) => (x.id === updated.id ? updated : x));
     lastCategory.current = updated.categoryId;
-    // Merge-aware: renaming/splitting notice is automatic via re-render (Â§8.5).
+    // Merge-aware: renaming/splitting notice is automatic via re-render (ÃÂ§8.5).
     setEditor(null);
     commitWithConflictCheck({ timetables: withActive(next), categories }, [updated], `Edited ${nameOf(updated)}`);
     return null;
@@ -956,12 +956,12 @@ export default function App() {
   };
 
   const splitBlock = (block: MergedBlock) => {
-    // Records are never merged (Â§8.1); "split" scopes editing to the tail
+    // Records are never merged (ÃÂ§8.1); "split" scopes editing to the tail
     // portion so it can diverge independently.
     setMenu(null);
     const tail = block.members[block.members.length - 1];
     setEditor(draftFromActivity(tail, 1));
-    say(`Split: editing ${nameOf(tail)} ${formatTime(tail.startTime)}â${formatTime(tail.endTime)} independently`);
+    say(`Split: editing ${nameOf(tail)} ${formatTime(tail.startTime)}Ã¢ÂÂ${formatTime(tail.endTime)} independently`);
   };
 
   // ---------- render ----------
@@ -978,45 +978,45 @@ export default function App() {
             {timetables.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.activities.length})</option>)}
           </select>
           <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
-            <button type="button" className="btn small" onClick={addTimetable} title="New timetable">ï¼</button>
-            <button type="button" className="btn small" onClick={renameTimetable} title="Rename timetable">â</button>
-            <button type="button" className="btn small" onClick={deleteTimetable} title="Delete timetable">ð</button>
+            <button type="button" className="btn small" onClick={addTimetable} title="New timetable">Ã¯Â¼Â</button>
+            <button type="button" className="btn small" onClick={renameTimetable} title="Rename timetable">Ã¢ÂÂ</button>
+            <button type="button" className="btn small" onClick={deleteTimetable} title="Delete timetable">Ã°ÂÂÂ</button>
           </div>
         </div>
         <div className="nav-group" role="group" aria-label="Views">
-          <button type="button" className="nav-btn" aria-pressed={screen === "planner"} onClick={() => setScreen("planner")}>ð Planner</button>
-          <button type="button" className="nav-btn" aria-pressed={screen === "today"} onClick={() => setScreen("today")}>â Today</button>
-          <button type="button" className="nav-btn" aria-pressed={screen === "priorities"} onClick={() => setScreen("priorities")}>ð Priorities</button>
-          <button type="button" className="nav-btn" aria-pressed={screen === "progress"} onClick={() => setScreen("progress")}>ð Progress</button>
+          <button type="button" className="nav-btn" aria-pressed={screen === "planner"} onClick={() => setScreen("planner")}>Ã°ÂÂÂ Planner</button>
+          <button type="button" className="nav-btn" aria-pressed={screen === "today"} onClick={() => setScreen("today")}>Ã¢ÂÂ Today</button>
+          <button type="button" className="nav-btn" aria-pressed={screen === "priorities"} onClick={() => setScreen("priorities")}>Ã°ÂÂÂ Priorities</button>
+          <button type="button" className="nav-btn" aria-pressed={screen === "progress"} onClick={() => setScreen("progress")}>Ã°ÂÂÂ Progress</button>
         </div>
         <div className="totals-card" aria-label="Weekly totals">
-          <h3>This week Â· {active.name}</h3>
-          <div className="totals-row"><span>ð Study</span><strong>{formatDuration(week.study)}</strong></div>
-          <div className="totals-row"><span>ð¼ Optional work</span><strong>{formatDuration(week.optionalWork)}</strong></div>
+          <h3>This week ÃÂ· {active.name}</h3>
+          <div className="totals-row"><span>Ã°ÂÂÂ Study</span><strong>{formatDuration(week.study)}</strong></div>
+          <div className="totals-row"><span>Ã°ÂÂÂ¼ Optional work</span><strong>{formatDuration(week.optionalWork)}</strong></div>
         </div>
         <div className="nav-group">
-          <button type="button" className="nav-btn" onClick={() => setCatOpen(true)}>ð· Categories</button>
-          <button type="button" className="nav-btn" onClick={() => setSettingsOpen(true)}>â Settings</button>
+          <button type="button" className="nav-btn" onClick={() => setCatOpen(true)}>Ã°ÂÂÂ· Categories</button>
+          <button type="button" className="nav-btn" onClick={() => setSettingsOpen(true)}>Ã¢ÂÂ Settings</button>
           <button
             type="button"
             className="nav-btn"
             onClick={() => patchSettings({ theme: settings.theme === "dark" ? "light" : "dark" })}
             title="Toggle dark mode"
           >
-            {settings.theme === "dark" ? "â Light mode" : "ð Dark mode"}
+            {settings.theme === "dark" ? "Ã¢ÂÂ Light mode" : "Ã°ÂÂÂ Dark mode"}
           </button>
         </div>
         <div className={`save-status${saveStatus.kind === "error" ? " error" : ""}`} role="status">{saveStatus.text}</div>
         {conflicts.length > 0 && (
           <div className="totals-card" role="alert">
-            <h3>â  {conflicts.length} overlap{conflicts.length > 1 ? "s" : ""}</h3>
+            <h3>Ã¢ÂÂ  {conflicts.length} overlap{conflicts.length > 1 ? "s" : ""}</h3>
             <button type="button" className="btn" onClick={() => setShowConflicts((v) => !v)} aria-expanded={showConflicts}>
               {showConflicts ? "Hide details" : "Show details"}
             </button>
             {showConflicts && (
               <ul>
                 {conflicts.slice(0, 8).map((c, i) => (
-                  <li key={i}>{c.aName || "(unnamed)"} â {c.bName || "(unnamed)"} ({WEEKDAY_SHORT[c.weekday]} {formatTime(c.overlapStart)}â{formatTime(c.overlapEnd)})</li>
+                  <li key={i}>{c.aName || "(unnamed)"} Ã¢ÂÂ {c.bName || "(unnamed)"} ({WEEKDAY_SHORT[c.weekday]} {formatTime(c.overlapStart)}Ã¢ÂÂ{formatTime(c.overlapEnd)})</li>
                 ))}
               </ul>
             )}
@@ -1024,21 +1024,21 @@ export default function App() {
         )}
       </aside>
 
-      <div className="main" data-print-title={`${active.name} â Week of ${new Date().toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}`}>
+      <div className="main" data-print-title={`${active.name} Ã¢ÂÂ Week of ${new Date().toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}`}>
         <div className="toolbar" role="toolbar" aria-label="Planner toolbar">
           <div className="file-menu" data-file-menu>
-            <button type="button" className="btn" aria-haspopup="menu" aria-expanded={fileMenuOpen} onClick={() => setFileMenuOpen((v) => !v)}>File â¾</button>
+            <button type="button" className="btn" aria-haspopup="menu" aria-expanded={fileMenuOpen} onClick={(e) => { e.stopPropagation(); setFileMenuOpen((v) => !v); }}>File Ã¢ÂÂ¾</button>
             {fileMenuOpen && (
               <div className="menu file-dropdown" role="menu" data-file-menu>
-                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); setImportOpen(true); }}>â¬ Importâ¦</button>
-                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doExportXlsx(); }}>â¬ Excel</button>
-                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doExportCsv(); }}>â¬ CSV</button>
-                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doBackup(); }}>ð¾ Backup</button>
-                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doRestore(); }}>â© Restoreâ¦</button>
-                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); window.print(); }}>ð¨ Printâ¦</button>
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); setImportOpen(true); }}>Ã¢Â¬Â ImportÃ¢ÂÂ¦</button>
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doExportXlsx(); }}>Ã¢Â¬Â Excel</button>
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doExportCsv(); }}>Ã¢Â¬Â CSV</button>
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doBackup(); }}>Ã°ÂÂÂ¾ Backup</button>
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doRestore(); }}>Ã¢ÂÂ© RestoreÃ¢ÂÂ¦</button>
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); window.print(); }}>Ã°ÂÂÂ¨ PrintÃ¢ÂÂ¦</button>
                 <hr />
-                <button type="button" role="menuitem" disabled={!undoRef.current.canUndo} onClick={() => { setFileMenuOpen(false); doUndo(); }}>â© Undo{undoRef.current.undoLabel ? `: ${undoRef.current.undoLabel}` : ""}</button>
-                <button type="button" role="menuitem" disabled={!undoRef.current.canRedo} onClick={() => { setFileMenuOpen(false); doRedo(); }}>âª Redo</button>
+                <button type="button" role="menuitem" disabled={!undoRef.current.canUndo} onClick={() => { setFileMenuOpen(false); doUndo(); }}>Ã¢ÂÂ© Undo{undoRef.current.undoLabel ? `: ${undoRef.current.undoLabel}` : ""}</button>
+                <button type="button" role="menuitem" disabled={!undoRef.current.canRedo} onClick={() => { setFileMenuOpen(false); doRedo(); }}>Ã¢ÂÂª Redo</button>
               </div>
             )}
           </div>
@@ -1055,36 +1055,36 @@ export default function App() {
                 className="btn"
                 onClick={smartCreate}
               >
-                ï¼ New activity
+                Ã¯Â¼Â New activity
               </button>
               <span className="derived" aria-live="polite">
-                ð {formatDuration(plannerView === "day" ? days[visibleDay].study : week.study)}
-                {" Â· "}ð¼ {formatDuration(plannerView === "day" ? days[visibleDay].optionalWork : week.optionalWork)}
+                Ã°ÂÂÂ {formatDuration(plannerView === "day" ? days[visibleDay].study : week.study)}
+                {" ÃÂ· "}Ã°ÂÂÂ¼ {formatDuration(plannerView === "day" ? days[visibleDay].optionalWork : week.optionalWork)}
               </span>
             </>
           )}
           <span style={{ flex: 1 }} />
           {timer && screen !== "today" && (
             <button type="button" className="btn" onClick={() => setScreen("today")} title="Open timer">
-              â± {formatElapsed(timerElapsedSec(timer, epochMs))} Â· Finishâ¦
+              Ã¢ÂÂ± {formatElapsed(timerElapsedSec(timer, epochMs))} ÃÂ· FinishÃ¢ÂÂ¦
             </button>
           )}
-          <button type="button" className="btn" onClick={doUndo} disabled={!undoRef.current.canUndo} title="Undo (Ctrl+Z)">â©</button>
-          <button type="button" className="btn" onClick={doRedo} disabled={!undoRef.current.canRedo} title="Redo">âª</button>
-          <button type="button" className="btn" onClick={() => window.print()} title="Print timetable (Ctrl+P)">ð¨</button>
-          <button type="button" className="btn" onClick={() => setFocusMode((v) => !v)} title="Focus mode â timetable only (F11)">â¶</button>
-          <button type="button" className="btn" onClick={() => setSettingsOpen(true)}>â</button>
+          <button type="button" className="btn" onClick={doUndo} disabled={!undoRef.current.canUndo} title="Undo (Ctrl+Z)">Ã¢ÂÂ©</button>
+          <button type="button" className="btn" onClick={doRedo} disabled={!undoRef.current.canRedo} title="Redo">Ã¢ÂÂª</button>
+          <button type="button" className="btn" onClick={() => window.print()} title="Print timetable (Ctrl+P)">Ã°ÂÂÂ¨</button>
+          <button type="button" className="btn" onClick={() => setFocusMode((v) => !v)} title="Focus mode Ã¢ÂÂ timetable only (F11)">Ã¢ÂÂ¶</button>
+          <button type="button" className="btn" onClick={() => setSettingsOpen(true)}>Ã¢ÂÂ</button>
         </div>
 
         {swapFrom && (
           <div className="notice" role="alert" style={{ margin: "8px 14px 0" }}>
-            Swap mode: click the activity to swap with â{swapFrom && blockByKey.get(swapFrom) ? nameOf(blockByKey.get(swapFrom)!.members[0]) : "â¦"}â.
+            Swap mode: click the activity to swap with Ã¢ÂÂ{swapFrom && blockByKey.get(swapFrom) ? nameOf(blockByKey.get(swapFrom)!.members[0]) : "Ã¢ÂÂ¦"}Ã¢ÂÂ.
             <button type="button" className="btn" style={{ marginLeft: 8 }} onClick={() => setSwapFrom(null)}>Cancel swap (Esc)</button>
           </div>
         )}
 
         <div className="notice" style={{ margin: "8px 14px 0" }} role="note">
-          Tip: click to select Â· double-click to switch Study â Personal instantly Â·
+          Tip: click to select ÃÂ· double-click to switch Study Ã¢ÂÂ Personal instantly ÃÂ·
           right-click (or long-press / Shift+F10) any block for all categories.
         </div>
 
@@ -1288,7 +1288,7 @@ export default function App() {
           <div className="modal" role="alertdialog" aria-modal="true" aria-label="Scheduling conflict" aria-describedby="conflict-desc">
             <h2>These activities overlap</h2>
             <p id="conflict-desc">{pending.conflicts}</p>
-            <p className="derived">Time Flow keeps overlaps visible and counts shared time once. Choose how to proceed â nothing has changed yet.</p>
+            <p className="derived">Time Flow keeps overlaps visible and counts shared time once. Choose how to proceed Ã¢ÂÂ nothing has changed yet.</p>
             <div className="modal-actions">
               <button
                 type="button"
@@ -1352,7 +1352,7 @@ export default function App() {
       <Toast toast={toast} onDismiss={() => setToast(null)} />
       {focusMode && (
         <button type="button" className="btn focus-exit" onClick={() => setFocusMode(false)}>
-          â Exit focus (Esc)
+          Ã¢ÂÂ Exit focus (Esc)
         </button>
       )}
       <div aria-live="polite" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
