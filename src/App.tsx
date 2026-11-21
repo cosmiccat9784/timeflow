@@ -1137,14 +1137,15 @@ export default function App() {
               timerActivityId={timer && timer.timetableId === active.id ? timer.activityId : null}
               onQuickSwitch={doQuickSwitch}
               onSelectBlock={(k, e) => {
-              if (e && (e as any).shiftKey) {
-                setSelectedKeys(prev => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n; });
-                setSelectedKey(k);
-              } else {
-                setSelectedKeys(new Set([k]));
-                setSelectedKey(k);
-              }
-            }}
+                if (!k) { setSelectedKeys(new Set()); setSelectedKey(null); return; }
+                if (e && (e as any).shiftKey) {
+                  setSelectedKeys(prev => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+                  setSelectedKey(k);
+                } else {
+                  setSelectedKeys(new Set([k]));
+                  setSelectedKey(k);
+                }
+              }}
               onOpenMenu={(m) => { setMenu(m); setSelectedKey(m.block.key); }}
               onEmptyMenu={(m: EmptySlotRequest) => setEmptyMenu(m)}
               onCreate={openCreate}
