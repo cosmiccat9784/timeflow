@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { isAligned, snapToSlot, parseTimeInput, formatTime, isValidDuration, clampDay, formatDuration, MIN_DURATION, SLOT } from "./time";
+import { isAligned, snapToSlot, parseTimeInput, formatTime, isValidDuration, clampDay, formatDuration } from "./time";
 import { validateActivity, validateCategories, validateDeadline } from "./validation";
 import { DEFAULT_CATEGORIES } from "./categories";
 import { computeMergedBlocks, mergeKey } from "./merge";
 import { findConflicts, assignLanes, conflictsForCandidate, overlaps } from "./conflicts";
 import { dayTotals, weekTotals, allDayTotals, unionMinutes, unionIntervals } from "./totals";
 import { daysUntil, relativeLabel, sortByNearness, nextWeekdayDate } from "./deadlines";
-import { currentWeekId, weekIdFor, mondayOfWeek, recordKey, freshWeekRecord, withCompletion, withMinutes, withDelivered, timerElapsedSec, formatElapsed } from "./records";
+import { weekIdFor, recordKey, freshWeekRecord, withCompletion, withMinutes, withDelivered, timerElapsedSec, formatElapsed } from "./records";
 import { computeDueReminders } from "./reminders";
 import { createBackup, parseBackup } from "./backup";
 import { migrateState, defaultSettings, defaultTimetable, defaultState, APP_VERSION } from "./store";
 import { UndoStack } from "./undo";
-import { displayName, WEEKDAY_NAMES } from "./types";
+import { displayName } from "./types";
 import type { Activity, Category, GlobalSettings } from "./types";
 
 // helpers
@@ -87,7 +87,7 @@ describe("deadlines", () => {
   it("daysUntil", () => { expect(daysUntil("2026-11-03","2026-11-03")).toBe(0); expect(daysUntil("2026-11-04","2026-11-03")).toBe(1); });
   it("relativeLabel", () => { expect(relativeLabel(0)).toBe("Today"); expect(relativeLabel(-1)).toContain("overdue"); });
   it("sortByNearness", () => {
-    const items=[{date:"2026-11-10",name:"f"},{date:"2026-10-28",name:"o"}] as any;
+    const items=[{date:"2026-11-10",name:"f", title:"f", id:"1"} as any,{date:"2026-10-28",name:"o", title:"o", id:"2"} as any];
     expect(sortByNearness(items,"2026-11-03")[0].name).toBe("o");
   });
   it("nextWeekdayDate returns next occurrence", () => {
