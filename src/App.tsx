@@ -178,6 +178,23 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activities, timetables, categories]);
 
+  // Esc closes any open menu/modal before focus mode
+  useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (menu) { setMenu(null); e.preventDefault(); return; }
+      if (emptyMenu) { setEmptyMenu(null); e.preventDefault(); return; }
+      if (editor) { setEditor(null); e.preventDefault(); return; }
+      if (settingsOpen) { setSettingsOpen(false); e.preventDefault(); return; }
+      if (catOpen) { setCatOpen(false); e.preventDefault(); return; }
+      if (importOpen) { setImportOpen(false); e.preventDefault(); return; }
+      if (fileMenuOpen) { setFileMenuOpen(false); e.preventDefault(); return; }
+      if (focusMode) { setFocusMode(false); e.preventDefault(); }
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [menu, emptyMenu, editor, settingsOpen, catOpen, importOpen, fileMenuOpen, focusMode]);
+
   // Close File menu on outside click
   useEffect(() => {
     if (!fileMenuOpen) return;
@@ -1007,19 +1024,6 @@ export default function App() {
           </button>
         </div>
         <div className={`save-status${saveStatus.kind === "error" ? " error" : ""}`} role="status">{saveStatus.text}</div>
-        {conflicts.length > 0 && (
-          <div className="totals-card" role="alert">
-            <h3>⚠ {conflicts.length} overlap{conflicts.length > 1 ? "s" : ""}</h3>
-            <button type="button" className="btn" onClick={() => setShowConflicts((v) => !v)} aria-expanded={showConflicts}>
-              {showConflicts ? "Hide details" : "Show details"}
-            </button>
-            {showConflicts && (
-              <ul>
-                {conflicts.slice(0, 8).map((c, i) => (
-                  <li key={i}>{c.aName || "(unnamed)"} ↔ {c.bName || "(unnamed)"} ({WEEKDAY_SHORT[c.weekday]} {formatTime(c.overlapStart)}–{formatTime(c.overlapEnd)})</li>
-                ))}
-              </ul>
-            )}
           </div>
         )}
       </aside>
@@ -1082,11 +1086,6 @@ export default function App() {
             <button type="button" className="btn" style={{ marginLeft: 8 }} onClick={() => setSwapFrom(null)}>Cancel swap (Esc)</button>
           </div>
         )}
-
-        <div className="notice" style={{ margin: "8px 14px 0" }} role="note">
-          Tip: click to select · double-click to switch Study ↔ Personal instantly ·
-          right-click (or long-press / Shift+F10) any block for all categories.
-        </div>
 
         {screen === "planner" && (
           <div className="day-tabs" role="tablist" aria-label="Days">
