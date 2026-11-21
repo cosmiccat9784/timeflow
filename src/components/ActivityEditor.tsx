@@ -90,7 +90,10 @@ function TimeRangePicker({
   active,
   activities,
   clockFormat,
+  visibleStart,
+  visibleEnd,
   onPick,
+  onClear,
 }: {
   weekday: Weekday;
   start: number;
@@ -98,7 +101,10 @@ function TimeRangePicker({
   active: boolean;
   activities: Activity[];
   clockFormat: ClockFormat;
+  visibleStart: number;
+  visibleEnd: number;
   onPick: (start: number, end: number) => void;
+  onClear: () => void;
 }) {
   const [anchor, setAnchor] = useState<number | null>(null);
 
@@ -124,11 +130,12 @@ function TimeRangePicker({
   };
 
   const hours: number[] = [];
-  for (let h = 0; h < 24; h++) hours.push(h);
+  for (let h = Math.floor(visibleStart/60); h < Math.ceil(visibleEnd/60); h++) if(h>=0 && h<24) hours.push(h);
+  if(hours.length===0) for(let h=0;h<24;h++) hours.push(h);
 
   return (
     <>
-    <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6}}><span style={{fontSize:12, color:"var(--text-muted)"}}>Tap a square to set start, tap another to extend end</span><button type="button" className="btn small" onClick={() => { setAnchor(null); onClear(); }}>Clear selection</button></div>
+      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6}}><span style={{fontSize:12, color:"var(--text-muted)"}}>Tap a square to set start, tap another to extend end</span><button type="button" className="btn small" onClick={() => { setAnchor(null); onClear(); }}>Clear selection</button></div>
     <div className="slot-picker" role="group" aria-label="Choose start and end time on the grid">
       {hours.map((h) => (
         <div key={h} className="slot-hour">
@@ -352,7 +359,7 @@ export function ActivityEditor({
           <textarea id="ed-notes" rows={2} value={d.notes} onChange={(e) => set("notes", e.target.value)} />
         </div>
         <fieldset style={{ border: "1px solid var(--line)", borderRadius: 8, marginBottom: 10 }}>
-          <legend>Reminders (V2 scheduling — stored now, fired in V2)</legend>
+          <legend>Reminders</legend>
           <label style={{ display: "flex", gap: 8, alignItems: "center", minHeight: 44 }}>
             <input type="checkbox" checked={d.startEnabled} onChange={(e) => set("startEnabled", e.target.checked)} style={{ width: 22, height: 22 }} />
             Remind before start
