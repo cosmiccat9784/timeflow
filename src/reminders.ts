@@ -27,6 +27,11 @@ function leadText(lead: number): string {
  * Due = reminder time reached within the last 90 seconds, not yet delivered,
  * outside quiet hours. Call on a ~30s tick and after schedule edits.
  */
+export function isInVisibleWindow(atMin: number, settings: GlobalSettings): boolean {
+  const s=settings.visibleStartMinutes, e=settings.visibleEndMinutes;
+  return atMin >= s && atMin < e;
+}
+
 export function computeDueReminders(
   activities: Activity[],
   categories: Category[],
@@ -62,6 +67,8 @@ export function computeDueReminders(
 
   for (const a of activities) {
     if (a.weekday !== today) continue;
+    // Don't notify outside visible window
+    if (!isInVisibleWindow(a.startTime, settings) && !isInVisibleWindow(a.endTime, settings)) continue;
     const r = a.reminderPreferences;
     const startOn = r?.startEnabled ?? true;
     const endOn = r?.endEnabled ?? true;
