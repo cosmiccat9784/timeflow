@@ -65,6 +65,24 @@ describe("regression: time picker overlay", () => {
   });
 });
 
+describe("regression: no mojibake (UTF-8 double-encode)", () => {
+  it("no source file contains mojibake bytes", () => {
+    const files = ["src/App.tsx","src/components/PlannerGrid.tsx","src/components/CategoryManager.tsx","src/styles.css"];
+    for(const f of files){
+      const content = readSrc(f);
+      // common mojibake sequences from double UTF-8
+      expect(content).not.toContain("Ã");
+      expect(content).not.toContain("Â");
+      // also check that File button still has correct arrow
+      if(f==="src/App.tsx") expect(content).toContain("File ▾");
+    }
+  });
+  it("Inter is offline - no googleapis import", () => {
+    const css = readSrc("src/styles.css");
+    expect(css).not.toContain("fonts.googleapis.com");
+  });
+});
+
 describe("regression: shift-click multi-select", () => {
   it("App.tsx has selectedKeys Set", () => {
     const app = readSrc("src/App.tsx");
