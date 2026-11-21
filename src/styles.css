@@ -46,7 +46,7 @@
   --slot-h: 14px;
   --hour-h: 56px;
   --shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
-  --font: "Inter", system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
 }
 
 /* Light mode Ã¢ÂÂ invert all blacks to whites */
@@ -620,8 +620,7 @@ button { cursor: pointer; }
   .toolbar .file-menu, .toolbar .btn { display: none !important; }
   .main { overflow: visible; }
   .grid-wrap { overflow: visible !important; padding: 0 !important; background: #fff !important; max-height: none !important; }
-  .grid { gap: 3px; max-height: none !important; transform-origin: top left; }
-  /* print-one-page: scale to fit */
+  .grid { gap: 4px; max-height: none !important; }
   :root { --slot-h: 10px; }
   .day-head {
     background: #f2f2f2 !important; color: #111 !important;
