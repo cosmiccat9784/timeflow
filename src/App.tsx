@@ -1026,7 +1026,7 @@ export default function App() {
 
       <div className="main" data-print-title={`${active.name} — Week of ${new Date().toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}`}>
         <div className="toolbar" role="toolbar" aria-label="Planner toolbar">
-          <div className="file-menu" data-file-menu data-file-menu>
+          <div className="file-menu" data-file-menu>
             <button type="button" className="btn" aria-haspopup="menu" aria-expanded={fileMenuOpen} onClick={(e) => { e.stopPropagation(); setFileMenuOpen((v) => !v); }}>File ▾</button>
             {fileMenuOpen && (
               <div className="menu file-dropdown" role="menu" data-file-menu>
