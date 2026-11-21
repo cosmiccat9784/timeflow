@@ -209,8 +209,7 @@ export function PlannerGrid({
       const key = blockEl.dataset.block!;
       const block = blockByKey.get(key);
       if (!block) return;
-      const handleEl = (e.target as HTMLElement).closest<HTMLElement>("[data-edge]");
-      const edge = (handleEl?.dataset.edge as "top" | "bottom" | undefined) ?? null;
+      const edge = null;
       const pointerMin = minutesAtClientY(day, e.clientY);
       press.current = {
         kind: "block", day, anchorStart: block.startTime, blockKey: key, edge,
@@ -270,12 +269,8 @@ export function PlannerGrid({
     } else if (p.blockKey) {
       const block = blockByKey.get(p.blockKey);
       if (!block) return;
-      if (p.edge) {
-        const t = clampDay(snapToSlot(minutesAtClientY(p.day, e.clientY)));
-        setPreview({ kind: "resize", edge: p.edge, time: t });
-      } else {
-        const day = dayAtClientX(e.clientX, p.day);
-        const dur = block.endTime - block.startTime;
+      {
+        const day = dayAtClientX(e.clientX, p.day);        const dur = block.endTime - block.startTime;
         let start = snapToSlot(minutesAtClientY(day, e.clientY) - p.grabOffset);
         start = Math.max(0, Math.min(1440 - dur, start));
         setPreview({ kind: "move", day, start });
@@ -457,7 +452,7 @@ export function PlannerGrid({
     const lanes = lanesByDay.get(b.weekday)?.get(first.id);
     const widthPct = lanes ? 100 / lanes.lanes : 100;
     const leftPct = lanes ? (lanes.lane * 100) / lanes.lanes : 0;
-    const hasConflict = b.members.some((m) => conflictIds.has(m.id));
+    const hasConflict = false;
     const isDone = b.members.every((m) => completedIds.has(m.id));
     const hasTimer = b.members.some((m) => m.id === timerActivityId);
     const isSelected = selectedBlockKey === b.key || (selectedKeys?.has(b.key) ?? false) || kbMove?.key === b.key;
@@ -477,7 +472,7 @@ export function PlannerGrid({
       <div
         key={b.key}
         data-block={b.key}
-        className={`block${b.members.length > 1 ? " merged" : ""}${hasConflict ? " conflict" : ""}${isSelected ? " selected" : ""}${isDone ? " done" : ""}${continuesTop ? " cont-top" : ""}${continuesBottom ? " cont-bottom" : ""}`}
+        className={`block${b.members.length > 1 ? " merged" : ""}${isSelected ? " selected" : ""}${isDone ? " done" : ""}${continuesTop ? " cont-top" : ""}${continuesBottom ? " cont-bottom" : ""}`}
         style={{
           top,
           height: h,
@@ -488,7 +483,6 @@ export function PlannerGrid({
         role="group"
         aria-label={`${label}, ${WEEKDAY_NAMES[b.weekday]} ${formatTime(b.startTime, clockFormat)} to ${formatTime(b.endTime, clockFormat)}, ${cat?.name ?? "unknown category"}${continuesTop ? ", continues before the visible start" : ""}${continuesBottom ? ", continues past the visible end" : ""}${hasConflict ? ", scheduling conflict" : ""}${b.members.length > 1 ? `, merged block of ${b.members.length}` : ""}`}
       >
-        <div className="resize-handle top" data-edge="top" aria-hidden="true" />
         <div className="block-row">
           {tickable && (
             <button
@@ -515,7 +509,7 @@ export function PlannerGrid({
             {label}
             {isDone && <span className="done-badge" title="Marked complete">✓</span>}
             {hasTimer && <span className="done-badge" title="Timer running">⏱</span>}
-            {hasConflict && <span className="conflict-dot" title="Scheduling conflict">⚠ overlap</span>}
+            
           </span>
           {h > 34 && (
             <span className="bmeta">
@@ -536,7 +530,6 @@ export function PlannerGrid({
               aria-hidden="true"
             />
           ))}
-        <div className="resize-handle bottom" data-edge="bottom" aria-hidden="true" />
       </div>
     );
   };
