@@ -78,7 +78,6 @@ export default function App() {
   const [focusMode, setFocusMode] = useState(false);
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ kind: "saved" | "saving" | "error"; text: string }>({ kind: "saved", text: "Saved" });
-  const [showConflicts, setShowConflicts] = useState(false);
   const [recap, setRecap] = useState<RecapData | null>(null);
 
   const undoRef = useRef(new UndoStack());
