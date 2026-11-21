@@ -127,6 +127,8 @@ function TimeRangePicker({
   for (let h = 0; h < 24; h++) hours.push(h);
 
   return (
+    <>
+    <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6}}><span style={{fontSize:12, color:"var(--text-muted)"}}>Tap a square to set start, tap another to extend end</span><button type="button" className="btn small" onClick={() => { setAnchor(null); onClear(); }}>Clear selection</button></div>
     <div className="slot-picker" role="group" aria-label="Choose start and end time on the grid">
       {hours.map((h) => (
         <div key={h} className="slot-hour">
