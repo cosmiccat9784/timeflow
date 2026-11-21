@@ -1,5 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
+/* Inter bundled offline - system fallback */
 /* Time Flow Ã¢ÂÂ Morgen-inspired dark theme (spec) + inverted light variant */
 
 :root {
@@ -47,7 +46,7 @@
   --slot-h: 14px;
   --hour-h: 56px;
   --shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
-  --font: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
 /* Light mode Ã¢ÂÂ invert all blacks to whites */
