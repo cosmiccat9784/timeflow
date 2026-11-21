@@ -640,7 +640,10 @@ button { cursor: pointer; }
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
     break-inside: avoid;
   }
-  .block .bmeta { color: #555 !important; }
+  .block .bmeta { color: #333 !important; }
+  .block .bname, .block .bname *, .block .bicon, .block .done-badge, .block .conflict-dot { color: #111 !important; }
+  .block * { color: #111 !important; }
+  .block .bmeta { color: #333 !important; }
   .now-line, .create-preview, .drag-preview, .resize-handle { display: none !important; }
   .dash, .empty { display: none !important; }
   /* Show a print header from the timetable name */
@@ -651,3 +654,6 @@ button { cursor: pointer; }
     padding: 8px 0 10px; text-align: center;
   }
 }
+
+/* Dark form controls */
+input[type="checkbox"]:checked{background:var(--accent-orange)}
