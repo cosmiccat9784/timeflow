@@ -663,9 +663,18 @@ button { cursor: pointer; }
 }
 
 /* Dark form controls */
-input[type="checkbox"]:checked{background:var(--accent-orange)}
-
-/* test-required content:"✓", input[type="time"], color-scheme:dark */
-input[type="checkbox"]:checked{content:"✓"}
-input[type="time"]{color-scheme:dark}
-.block *{color:#111}
+input[type="checkbox"],input[type="radio"]{appearance:none;-webkit-appearance:none;width:18px;height:18px;margin:0;background:var(--bg-panel);border:1.5px solid var(--border);display:inline-grid;place-content:center;cursor:pointer;vertical-align:middle}
+input[type="checkbox"]{border-radius:4px} input[type="radio"]{border-radius:50%}
+input[type="checkbox"]:checked{background:var(--accent-orange);border-color:var(--accent-orange)}
+input[type="checkbox"]:checked::after{content:"✓";color:#fff;font-size:12px;line-height:1;font-weight:700}
+input[type="radio"]:checked{border-color:var(--accent-orange)}
+input[type="radio"]:checked::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent-orange)}
+input[type="time"],input[type="date"],input[type="text"],input[type="number"],textarea{color-scheme:dark;background:var(--bg-panel);color:var(--text-primary);border:1px solid var(--border);border-radius:8px}
+[data-theme="light"] input[type="time"],[data-theme="light"] input[type="date"]{color-scheme:light;background:#fff;color:#23272E;border-color:#E6E2D8}
+input[type="time"]::-webkit-calendar-picker-indicator,input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7);cursor:pointer;margin-left:4px}
+[data-theme="light"] input[type="time"]::-webkit-calendar-picker-indicator,[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator{filter:none}
+input[type="time"]{padding-right:8px}
+input[type="color"]{appearance:none;-webkit-appearance:none;width:32px;height:32px;padding:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg-panel);cursor:pointer}
+input[type="color"]::-webkit-color-swatch-wrapper{padding:0}
+input[type="color"]::-webkit-color-swatch{border:0;border-radius:7px}
+.block.selected{outline:2px solid var(--accent-orange);outline-offset:-2px}
