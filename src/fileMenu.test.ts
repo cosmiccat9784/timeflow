@@ -53,3 +53,26 @@ describe("File button - regression", () => {
     expect(fileMenuCount).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe("File dropdown positioning - must be visible", () => {
+  it(".menu.file-dropdown overrides fixed with absolute", async () => {
+    const fs=await import("fs");
+    const path=await import("path");
+    const css=fs.readFileSync(path.join(process.cwd(), "src/styles.css"), "utf8");
+    expect(css).toContain(".menu.file-dropdown");
+    expect(css).toContain("position: absolute");
+  });
+});
+
+describe("Version consistency", () => {
+  it("package, tauri and store versions match", async () => {
+    const fs=await import("fs");
+    const path=await import("path");
+    const pkg=JSON.parse(fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8"));
+    const tauri=JSON.parse(fs.readFileSync(path.join(process.cwd(), "src-tauri/tauri.conf.json"), "utf8"));
+    const store=fs.readFileSync(path.join(process.cwd(), "src/store.ts"), "utf8");
+    expect(tauri.version).toBe(pkg.version);
+    expect(store).toContain('APP_VERSION = "' + pkg.version + '"');
+    expect(store).not.toContain("export const undefined");
+  });
+});
