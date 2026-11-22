@@ -203,9 +203,10 @@ export default function App() {
       setFileMenuOpen(false);
     };
     const onKey2 = (e: KeyboardEvent) => { if (e.key === "Escape") setFileMenuOpen(false); };
-    window.addEventListener("click", onDown);
+    // Use mousedown to catch outside clicks before button onClick
+    window.addEventListener("mousedown", onDown);
     window.addEventListener("keydown", onKey2);
-    return () => { window.removeEventListener("click", onDown); window.removeEventListener("keydown", onKey2); };
+    return () => { window.removeEventListener("mousedown", onDown); window.removeEventListener("keydown", onKey2); };
   }, [fileMenuOpen]);
 
   // ---------- derived ----------
@@ -1028,7 +1029,7 @@ export default function App() {
       <div className="main" data-print-title={`${active.name} — Week of ${new Date().toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}`}>
         <div className="toolbar" role="toolbar" aria-label="Planner toolbar">
           <div className="file-menu" data-file-menu>
-            <button type="button" className="btn" aria-haspopup="menu" aria-expanded={fileMenuOpen} onClick={(e) => { e.stopPropagation(); setFileMenuOpen((v) => !v); }}>File ▾</button>
+            <button type="button" className="btn" aria-haspopup="menu" aria-expanded={fileMenuOpen} onClick={() => setFileMenuOpen((v) => !v)}>File ▾</button>
             {fileMenuOpen && (
               <div className="menu file-dropdown" role="menu" data-file-menu>
                 <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); setImportOpen(true); }}>⬇ Import…</button>
