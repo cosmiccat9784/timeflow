@@ -32,6 +32,9 @@
       "deb"
     ],
     "category": "Productivity",
+    "publisher": "cosmiccat9784",
+    "homepage": "https://github.com/cosmiccat9784/timeflow",
+    "copyright": "© 2026 cosmiccat9784",
     "shortDescription": "Visual weekly timetable planner",
     "longDescription": "Time Flow makes it easy to plan, organise, switch between, and review activities in a repeating weekly timetable.",
     "icon": [
@@ -42,6 +45,8 @@
       "icons/icon.ico"
     ],
     "windows": {
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "http://timestamp.digicert.com",
       "nsis": {
         "installMode": "currentUser"
       }

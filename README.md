@@ -209,3 +209,16 @@ src-tauri/
 
 Local-first, no accounts, no network calls, no analytics. Imports treated as
 untrusted input; macros never executed; formulas never evaluated (§24).
+
+## Code signing status
+
+| Platform | Current | Result | To remove the warning |
+|---|---|---|---|
+| Windows | Unsigned | SmartScreen: “Unknown publisher” | Add a code-signing certificate (~$10/mo Azure Trusted Signing, or an OV/EV cert) as `WINDOWS_CERTIFICATE` + `WINDOWS_CERTIFICATE_PASSWORD` |
+| macOS | Ad-hoc signed | “Unidentified developer” | Add `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` |
+| Linux | Unsigned | No warning | — |
+
+The workflow already imports and applies both certificates when those secrets
+exist, so no code changes are needed once a certificate is purchased. The
+installer publisher metadata (Apps & Features) already reads
+**cosmiccat9784**.

@@ -89,6 +89,45 @@ describe("macOS packaging — notarisation-free but not damaged", () => {
   });
 });
 
+describe("Windows publisher identity", () => {
+  const conf = () => JSON.parse(read("src-tauri/tauri.conf.json"));
+  const workflow = () => read(".github/workflows/build.yml");
+
+  it("declares the publisher shown in Apps & Features", () => {
+    expect(conf().bundle.publisher).toBe("cosmiccat9784");
+  });
+
+  it("declares a homepage and copyright", () => {
+    const b = conf().bundle;
+    expect(b.homepage).toContain("github.com/cosmiccat9784/timeflow");
+    expect(b.copyright).toContain("cosmiccat9784");
+  });
+
+  it("configures a timestamp server for Authenticode", () => {
+    const w = conf().bundle.windows;
+    expect(w.digestAlgorithm).toBe("sha256");
+    expect(w.timestampUrl).toMatch(/^http/);
+  });
+
+  it("the workflow signs the installer when a certificate is supplied", () => {
+    const y = workflow();
+    expect(y).toContain("WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}");
+    expect(y).toContain("signtool sign /fd SHA256");
+    expect(y).toContain("signtool verify /pa");
+    expect(y).toContain("if: runner.os == 'Windows' && env.WINDOWS_CERTIFICATE != ''");
+  });
+
+  it("the Windows signing step does not run without a certificate", () => {
+    // SmartScreen still shows "Unknown publisher" for unsigned builds; the
+    // guard keeps CI green in that case instead of failing on a missing pfx.
+    const y = workflow();
+    const guard = y.indexOf("env.WINDOWS_CERTIFICATE != ''");
+    const sign = y.indexOf("signtool sign /fd SHA256");
+    expect(guard).toBeGreaterThan(-1);
+    expect(sign).toBeGreaterThan(guard);
+  });
+});
+
 describe("README tells macOS users how to open an unsigned build", () => {
   it("documents the Gatekeeper override", () => {
     const readme = read("README.md");

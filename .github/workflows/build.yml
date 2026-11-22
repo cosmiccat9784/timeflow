@@ -101,6 +101,10 @@ jobs:
       APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      # Optional Windows Authenticode certificate (base64 .pfx). When present
+      # the installer is signed and SmartScreen shows the publisher name.
+      WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -165,6 +169,27 @@ jobs:
           codesign --verify --deep --strict --verbose=2 "$APP"
           spctl --assess --type execute --verbose=2 "$APP"
           xcrun stapler validate "$APP"
+      # Authenticode-sign the installer so Windows shows the publisher name
+      # instead of "Unknown publisher".
+      - name: Sign Windows installer
+        if: runner.os == 'Windows' && env.WINDOWS_CERTIFICATE != ''
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $pfx = Join-Path $env:RUNNER_TEMP 'cert.pfx'
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
+          $files = Get-ChildItem -Path '${{ matrix.bundle_dir }}' -Recurse -Include *.exe
+          if (-not $files) { throw 'No Windows executables found to sign.' }
+          foreach ($f in $files) {
+            & signtool sign /fd SHA256 /td SHA256 /tr http://timestamp.digicert.com `
+              /f $pfx /p $env:WINDOWS_CERTIFICATE_PASSWORD $f.FullName
+            if ($LASTEXITCODE -ne 0) { throw "signtool failed for $($f.Name)" }
+            & signtool verify /pa /v $f.FullName
+            if ($LASTEXITCODE -ne 0) { throw "signature verification failed for $($f.Name)" }
+            $sig = Get-AuthenticodeSignature $f.FullName
+            Write-Host "$($f.Name): $($sig.Status) - $($sig.SignerCertificate.Subject)"
+          }
+          Remove-Item $pfx -Force
       - name: Upload bundles
         uses: actions/upload-artifact@v4
         with:
