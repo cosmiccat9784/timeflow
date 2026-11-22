@@ -337,6 +337,13 @@ button { cursor: pointer; }
 .menu button.current { font-weight: 700; color: var(--accent-orange); }
 .menu .swatch { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.3); flex: 0 0 16px; }
 .menu hr { border: 0; border-top: 1px solid var(--border); margin: 6px 4px; }
+.menu.file-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 75;
+  min-width: 220px;
+}
 
 .modal-backdrop {
   position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55);
