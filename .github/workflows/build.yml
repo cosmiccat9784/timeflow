@@ -70,13 +70,37 @@ jobs:
         include:
           - os: windows-latest
             bundles: nsis
+            artifact: nsis
+            extra: ""
+            bundle_dir: src-tauri/target/release/bundle
+          # Universal binary so the DMG runs on both Apple Silicon and Intel.
           - os: macos-latest
-            bundles: dmg
+            bundles: app,dmg
+            artifact: dmg
+            extra: "--target universal-apple-darwin"
+            bundle_dir: src-tauri/target/universal-apple-darwin/release/bundle
           - os: ubuntu-22.04
             bundles: appimage
+            artifact: appimage
+            extra: ""
+            bundle_dir: src-tauri/target/release/bundle
           - os: ubuntu-22.04
             bundles: deb
+            artifact: deb
+            extra: ""
+            bundle_dir: src-tauri/target/release/bundle
     runs-on: ${{ matrix.os }}
+    env:
+      # Optional Developer ID path. When these secrets are present Tauri signs
+      # and notarizes properly; when they are absent the macOS step falls back
+      # to an ad-hoc signature (plus the xattr workaround documented in README).
+      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -84,6 +108,22 @@ jobs:
           node-version: 20
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+      - name: Add macOS targets
+        if: runner.os == 'macOS'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - name: Import Apple Developer ID certificate
+        if: runner.os == 'macOS' && env.APPLE_CERTIFICATE != ''
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/build.keychain-db"
+          echo "$APPLE_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          rm -f "$RUNNER_TEMP/cert.p12"
       - name: Install Linux deps
         if: runner.os == 'Linux'
         run: |
@@ -91,9 +131,42 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
       - run: npm install --no-audit --no-fund
       - run: npx tauri icon src-tauri/icons/icon.svg
-      - run: npm run tauri build -- --bundles ${{ matrix.bundles }}
+      - run: npm run tauri build -- --bundles ${{ matrix.bundles }} ${{ matrix.extra }}
+      # Gatekeeper reports "damaged" for a downloaded bundle whose signature is
+      # missing or inconsistent with its nested Mach-O binaries. Rust ad-hoc
+      # signs the executable itself, so the .app bundle must be signed to match.
+      # This runs only on the ad-hoc path; with a Developer ID certificate Tauri
+      # already signed and notarized the bundle and re-signing would break it.
+      - name: Ad-hoc sign and repackage macOS DMG
+        if: runner.os == 'macOS' && env.APPLE_CERTIFICATE == ''
+        run: |
+          set -euo pipefail
+          BUNDLE="${{ matrix.bundle_dir }}"
+          APP=$(find "$BUNDLE/macos" -maxdepth 1 -name '*.app' -print -quit)
+          echo "App bundle: $APP"
+          test -n "$APP"
+          xattr -cr "$APP" || true
+          codesign --force --deep --sign - "$APP"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          DMG=$(find "$BUNDLE/dmg" -maxdepth 1 -name '*.dmg' -print -quit)
+          echo "DMG: $DMG"
+          rm -f "$DMG"
+          hdiutil create -volname "Time Flow" -srcfolder "$APP" -ov -format UDZO "$DMG"
+          hdiutil verify "$DMG"
+          # Prove the app inside the image is signed too.
+          MOUNT=$(hdiutil attach "$DMG" -nobrowse -readonly | tail -1 | awk '{$1=""; $2=""; sub(/^  */,""); print}')
+          codesign --verify --deep --strict "$MOUNT/Time Flow.app"
+          hdiutil detach "$MOUNT"
+      - name: Verify Developer ID signature and notarization
+        if: runner.os == 'macOS' && env.APPLE_CERTIFICATE != ''
+        run: |
+          set -euo pipefail
+          APP=$(find "${{ matrix.bundle_dir }}/macos" -maxdepth 1 -name '*.app' -print -quit)
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          spctl --assess --type execute --verbose=2 "$APP"
+          xcrun stapler validate "$APP"
       - name: Upload bundles
         uses: actions/upload-artifact@v4
         with:
-          name: timeflow-${{ runner.os }}-${{ matrix.bundles }}
-          path: src-tauri/target/release/bundle/
+          name: timeflow-${{ runner.os }}-${{ matrix.artifact }}
+          path: ${{ matrix.bundle_dir }}/
