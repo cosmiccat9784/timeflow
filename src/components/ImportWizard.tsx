@@ -6,6 +6,7 @@ import { minutesFromCsvTime, parseCsv, weekdayFromCsvName } from "../exportCsv";
 import { validateActivity } from "../validation";
 import { formatTime } from "../time";
 import { pickFile } from "../native";
+import { CustomSelect } from "./CustomSelect";
 
 // Guided import: file → sheet → preview/correct → mode → commit (§16.3).
 // Nothing commits before the final step; invalid rows are flagged, never
@@ -231,9 +232,7 @@ export function ImportWizard({
             {plans.length > 1 && (
               <div className="field">
                 <label htmlFor="imp-sheet">Worksheet</label>
-                <select id="imp-sheet" value={sheetIdx} onChange={(e) => pickSheet(Number(e.target.value))}>
-                  {plans.map((p, i) => <option key={p.sheetName} value={i}>{p.sheetName} ({p.proposals.length} found)</option>)}
-                </select>
+                <CustomSelect id="imp-sheet" value={String(sheetIdx)} options={plans.map((p, i) => ({ value: String(i), label: `${p.sheetName} (${p.proposals.length} found)` }))} onChange={(v) => pickSheet(Number(v))} ariaLabel="Worksheet" />
               </div>
             )}
             {sheetWarnings.length > 0 && (
@@ -255,17 +254,13 @@ export function ImportWizard({
                       <tr key={p.key} className={err && err !== "excluded" ? "row-invalid" : ""}>
                         <td><input type="checkbox" checked={!p.excluded} onChange={(e) => patch(p.key, { excluded: !e.target.checked })} aria-label={`Include ${p.name || "activity"}`} style={{ width: 22, height: 22 }} /></td>
                         <td>
-                          <select value={p.day} onChange={(e) => patch(p.key, { day: Number(e.target.value) as Weekday })} aria-label="Day">
-                            {WEEKDAY_NAMES.map((n, i) => <option key={n} value={i}>{n}</option>)}
-                          </select>
+                          <CustomSelect value={String(p.day)} options={WEEKDAY_NAMES.map((n, i) => ({ value: String(i), label: n }))} onChange={(v) => patch(p.key, { day: Number(v) as Weekday })} ariaLabel="Day" />
                         </td>
                         <td><input value={p.start === null ? "" : formatTime(p.start, clockFormat)} onChange={(e) => { const v = parseHM(e.target.value); patch(p.key, { start: v }); }} aria-label="Start time" size={10} /></td>
                         <td><input value={p.end === null ? "" : formatTime(p.end, clockFormat)} onChange={(e) => { const v = parseHM(e.target.value); patch(p.key, { end: v }); }} aria-label="End time" size={10} /></td>
                         <td><input value={p.name} onChange={(e) => patch(p.key, { name: e.target.value })} aria-label="Activity name" size={14} placeholder="(blank = category)" /></td>
                         <td>
-                          <select value={p.categoryId} onChange={(e) => patch(p.key, { categoryId: e.target.value })} aria-label="Category">
-                            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                          </select>
+                          <CustomSelect value={p.categoryId} options={categories.map((c) => ({ value: c.id, label: c.name }))} onChange={(v) => patch(p.key, { categoryId: v })} ariaLabel="Category" />
                         </td>
                         <td className="warn-cell">
                           {p.warnings.map((w, i) => <div key={i}>⚠ {w}</div>)}

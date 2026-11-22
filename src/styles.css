@@ -678,3 +678,8 @@ input[type="color"]{appearance:none;-webkit-appearance:none;width:32px;height:32
 input[type="color"]::-webkit-color-swatch-wrapper{padding:0}
 input[type="color"]::-webkit-color-swatch{border:0;border-radius:7px}
 .block.selected{outline:2px solid var(--accent-orange);outline-offset:-2px}
+/* Safety net: any native select still in the tree stays dark */
+select{background:var(--bg-panel);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;min-height:44px;padding:8px 10px;color-scheme:dark}
+[data-theme="light"] select{color-scheme:light;background:#fff;color:#23272E;border-color:#E6E2D8}
+select option{background:var(--bg-elevated);color:var(--text-primary)}
+[data-theme="light"] select option{background:#fff;color:#23272E}

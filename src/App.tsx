@@ -30,6 +30,7 @@ import { TodayView } from "./components/TodayView";
 import { ProgressView } from "./components/ProgressView";
 import { RecapModal, recapToCsv, type RecapData } from "./components/RecapModal";
 import { PrioritiesView } from "./components/PrioritiesView";
+import { CustomSelect } from "./components/CustomSelect";
 import { todayKey } from "./deadlines";
 
 interface PendingOp {
@@ -991,9 +992,7 @@ export default function App() {
       <aside className="sidebar" aria-label="Planner navigation">
         <div className="field" style={{ marginBottom: 0 }}>
           <label htmlFor="tt-switch">Timetable</label>
-          <select id="tt-switch" value={active.id} onChange={(e) => switchTimetable(e.target.value)}>
-            {timetables.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.activities.length})</option>)}
-          </select>
+          <CustomSelect id="tt-switch" value={active.id} options={timetables.map((t) => ({ value: t.id, label: `${t.name} (${t.activities.length})` }))} onChange={(v) => switchTimetable(v)} ariaLabel="Timetable" />
           <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
             <button type="button" className="btn small" onClick={addTimetable} title="New timetable">＋</button>
             <button type="button" className="btn small" onClick={renameTimetable} title="Rename timetable">✎</button>

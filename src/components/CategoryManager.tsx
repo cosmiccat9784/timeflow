@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ColorPicker } from "./ColorPicker";
+import { CustomSelect } from "./CustomSelect";
 import type { Activity, Category } from "../types";
 import { uid } from "../types";
 
@@ -97,15 +98,12 @@ export function CategoryManager({
                     <span className="swatch" style={{ background: c.colour, display: "inline-block", width: 16, height: 16, borderRadius: 4, marginLeft: 6, verticalAlign: "middle" }} aria-hidden="true" />
                   </td>
                   <td>
-                    <select
+                    <CustomSelect
                       value={c.countsTowardStudy ? "study" : c.countsTowardOptionalWork ? "optional" : "neither"}
-                      onChange={(e) => setCounting(c.id, e.target.value as "study" | "neither" | "optional")}
-                      aria-label={`Counting for ${c.name}`}
-                    >
-                      <option value="study">📚 Study</option>
-                      <option value="neither">Neither</option>
-                      <option value="optional">💼 Optional work</option>
-                    </select>
+                      options={[{ value: "study", label: "📚 Study" }, { value: "neither", label: "Neither" }, { value: "optional", label: "💼 Optional work" }]}
+                      onChange={(v) => setCounting(c.id, v as "study" | "neither" | "optional")}
+                      ariaLabel={`Counting for ${c.name}`}
+                    />
                   </td>
                   <td>{usedBy(c.id)}</td>
                   <td>
@@ -122,9 +120,7 @@ export function CategoryManager({
           <div className="notice" role="alert">
             “{list.find((c) => c.id === pendingDelete)?.name}” is used by {usedBy(pendingDelete)} activit{usedBy(pendingDelete) === 1 ? "y" : "ies"}.
             Move them to{" "}
-            <select value={replacement} onChange={(e) => setReplacement(e.target.value)} aria-label="Replacement category">
-              {list.filter((c) => c.id !== pendingDelete).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>{" "}
+            <CustomSelect value={replacement} options={list.filter((c) => c.id !== pendingDelete).map((c) => ({ value: c.id, label: c.name }))} onChange={(v) => setReplacement(v)} ariaLabel="Replacement category" />{" "}
             <button type="button" className="btn small" onClick={() => confirmDelete(pendingDelete)}>Confirm delete</button>{" "}
             <button type="button" className="btn small" onClick={() => setPendingDelete(null)}>Keep</button>
           </div>

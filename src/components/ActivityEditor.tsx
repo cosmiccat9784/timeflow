@@ -4,6 +4,7 @@ import { WEEKDAY_NAMES, uid, nowIso } from "../types";
 import { formatTime } from "../time";
 import { validateActivity } from "../validation";
 import { categoryById } from "../categories";
+import { CustomSelect } from "./CustomSelect";
 
 export interface EditorDraft {
   /** Existing activity id, or null for a new activity. */
@@ -287,17 +288,11 @@ export function ActivityEditor({
         <div className="form-row">
           <div className="field">
             <label htmlFor="ed-cat">Category (required)</label>
-            <select id="ed-cat" value={d.categoryId} onChange={(e) => { categoryTouched.current = true; set("categoryId", e.target.value); }}>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
-              ))}
-            </select>
+            <CustomSelect id="ed-cat" value={d.categoryId} options={categories.map((c) => ({ value: c.id, label: `${c.icon} ${c.name}` }))} onChange={(v) => { categoryTouched.current = true; set("categoryId", v); }} ariaLabel="Category (required)" />
           </div>
           <div className="field">
             <label htmlFor="ed-day">Weekday (required)</label>
-            <select id="ed-day" value={d.weekday} onChange={(e) => set("weekday", Number(e.target.value) as Weekday)}>
-              {WEEKDAY_NAMES.map((n, i) => <option key={n} value={i}>{n}</option>)}
-            </select>
+            <CustomSelect id="ed-day" value={String(d.weekday)} options={WEEKDAY_NAMES.map((n, i) => ({ value: String(i), label: n }))} onChange={(v) => set("weekday", Number(v) as Weekday)} ariaLabel="Weekday (required)" />
           </div>
         </div>
         {d.activityId === null ? (
@@ -336,19 +331,11 @@ export function ActivityEditor({
           <div className="form-row" style={{display:"none"}}>
             <div className="field">
               <label htmlFor="ed-start">Start (15-min steps)</label>
-              <select id="ed-start" value={d.startTime} onChange={(e) => set("startTime", Number(e.target.value))}>
-                {timeOptions().map((t) => (
-                  <option key={t} value={t}>{formatTime(t, clockFormat)}</option>
-                ))}
-              </select>
+              <CustomSelect id="ed-start" value={String(d.startTime)} options={timeOptions().map((t) => ({ value: String(t), label: formatTime(t, clockFormat) }))} onChange={(v) => set("startTime", Number(v))} ariaLabel="Start (15-min steps)" />
             </div>
             <div className="field">
               <label htmlFor="ed-end">End (15-min steps)</label>
-              <select id="ed-end" value={d.endTime} onChange={(e) => set("endTime", Number(e.target.value))}>
-                {timeOptions().map((t) => (
-                  <option key={t} value={t}>{formatTime(t, clockFormat)}</option>
-                ))}
-              </select>
+              <CustomSelect id="ed-end" value={String(d.endTime)} options={timeOptions().map((t) => ({ value: String(t), label: formatTime(t, clockFormat) }))} onChange={(v) => set("endTime", Number(v))} ariaLabel="End (15-min steps)" />
             </div>
           </div>
           </>
@@ -367,11 +354,7 @@ export function ActivityEditor({
           </div>
           <div className="field">
             <label htmlFor="ed-ow">Optional-work counting</label>
-            <select id="ed-ow" value={d.optionalWorkOverride} onChange={(e) => set("optionalWorkOverride", e.target.value as EditorDraft["optionalWorkOverride"])}>
-              <option value="inherit">Follow category default</option>
-              <option value="yes">Count as optional work</option>
-              <option value="no">Do not count as optional work</option>
-            </select>
+            <CustomSelect id="ed-ow" value={d.optionalWorkOverride} options={[{ value: "inherit", label: "Follow category default" }, { value: "yes", label: "Count as optional work" }, { value: "no", label: "Do not count as optional work" }]} onChange={(v) => set("optionalWorkOverride", v as EditorDraft["optionalWorkOverride"])} ariaLabel="Optional-work counting" />
           </div>
         </div>
         <div className="field">
@@ -383,16 +366,12 @@ export function ActivityEditor({
           <label style={{ display: "flex", gap: 8, alignItems: "center", minHeight: 44 }}>
             <input type="checkbox" checked={d.startEnabled} onChange={(e) => set("startEnabled", e.target.checked)} style={{ width: 22, height: 22 }} />
             Remind before start
-            <select value={d.startLead} onChange={(e) => set("startLead", Number(e.target.value))} aria-label="Minutes before start">
-              {[0, 5, 10, 15, 30].map((m) => <option key={m} value={m}>{m} min</option>)}
-            </select>
+            <CustomSelect value={String(d.startLead)} options={[0, 5, 10, 15, 30].map((m) => ({ value: String(m), label: `${m} min` }))} onChange={(v) => set("startLead", Number(v))} ariaLabel="Minutes before start" />
           </label>
           <label style={{ display: "flex", gap: 8, alignItems: "center", minHeight: 44 }}>
             <input type="checkbox" checked={d.endEnabled} onChange={(e) => set("endEnabled", e.target.checked)} style={{ width: 22, height: 22 }} />
             Remind before end
-            <select value={d.endLead} onChange={(e) => set("endLead", Number(e.target.value))} aria-label="Minutes before end">
-              {[0, 5, 10, 15, 30].map((m) => <option key={m} value={m}>{m} min</option>)}
-            </select>
+            <CustomSelect value={String(d.endLead)} options={[0, 5, 10, 15, 30].map((m) => ({ value: String(m), label: `${m} min` }))} onChange={(v) => set("endLead", Number(v))} ariaLabel="Minutes before end" />
           </label>
         </fieldset>
         <div className="modal-actions">
