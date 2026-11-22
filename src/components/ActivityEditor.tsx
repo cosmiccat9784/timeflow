@@ -314,6 +314,7 @@ export function ActivityEditor({
             />
           </div>
         ) : (
+          <>
           <div className="field">
             <label>Time — tap a square to adjust</label>
             <TimeRangePicker
@@ -347,6 +348,7 @@ export function ActivityEditor({
               </select>
             </div>
           </div>
+          </>
         )}
         <p className="derived" aria-live="polite">
           Duration: {duration >= 0 ? `${Math.floor(duration / 60)}h ${duration % 60}m` : "—"}
