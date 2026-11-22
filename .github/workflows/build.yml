@@ -1,5 +1,8 @@
 name: TimeFlow builds
 
+permissions:
+  contents: write
+
 defaults:
   run:
     shell: bash
