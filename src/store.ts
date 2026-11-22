@@ -4,7 +4,7 @@ import { DEFAULT_CATEGORIES, DEFAULT_SWITCH_PAIR, LEGACY_CATEGORY_NAMES } from "
 import { nextWeekdayDate } from "./deadlines";
 import { validateActivity, validateCategories, validateDeadline } from "./validation";
 
-export const APP_VERSION = "0.3.4";
+export const APP_VERSION = "0.3.6";
 
 export function defaultSettings(): GlobalSettings {
   const darkOS = typeof window !== "undefined" && !!window.matchMedia?.("(prefers-color-scheme: dark)").matches;
