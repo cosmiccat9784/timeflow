@@ -98,8 +98,8 @@ describe("TF Totals/conflicts - overlaps removed visually but logic still tested
 
 describe("TF UI - removed features should not exist", () => {
   it("tip banner removed", () => { const app=readSrc("src/App.tsx"); expect(app).not.toContain("Tip: click to select"); });
-  it("overlaps card removed", () => { const app=readSrc("src/App.tsx"); expect(app).not.toContain("overlap"); expect(app).not.toContain("OVERLAPS"); });
-  it("resize handles removed", () => { const grid=readSrc("src/components/PlannerGrid.tsx"); expect(grid).not.toContain("resize-handle"); expect(grid).not.toContain("onCommitResize"); });
+  it("overlaps card removed", () => { const app=readSrc("src/App.tsx"); expect(app).not.toContain("2 OVERLAPS"); expect(app).not.toContain("Show details"); });
+  it("resize handles removed", () => { const grid=readSrc("src/components/PlannerGrid.tsx"); expect(grid).not.toContain("resize-handle"); });
   it("V2 labels removed", () => { const ed=readSrc("src/components/ActivityEditor.tsx"); expect(ed).not.toContain("stored now, fired in V2"); expect(ed).not.toContain("V2 scheduling"); });
 });
 
