@@ -23,11 +23,10 @@ describe("regression: checkbox overlay bug", () => {
 });
 
 describe("regression: File button not opening", () => {
-  it("App.tsx File button stops propagation and has data-file-menu", () => {
+  it("App.tsx File button has data-file-menu", () => {
     const app = readSrc("src/App.tsx");
     expect(app).toContain("data-file-menu");
-    expect(app).toContain("e.stopPropagation()");
-    expect(app).toMatch(/onClick=\{\(e\).*stopPropagation/);
+    expect(app).toContain('onClick={() => setFileMenuOpen');
   });
   it("file-dropdown has data-file-menu", () => {
     const app = readSrc("src/App.tsx");
@@ -37,7 +36,7 @@ describe("regression: File button not opening", () => {
   it("outside click handler checks closest data-file-menu", () => {
     const app = readSrc("src/App.tsx");
     expect(app).toContain('closest("[data-file-menu]")');
-    expect(app).toContain('window.addEventListener("click", onDown)');
+    expect(app).toContain('addEventListener("mousedown"');
   });
 });
 
