@@ -395,6 +395,28 @@ export default function App() {
     }
   };
 
+  /** Bulk delete for shift-click multi-selection. */
+  const deleteSelected = () => {
+    const keys = selectedKeys.size
+      ? Array.from(selectedKeys)
+      : selectedKey
+        ? [selectedKey]
+        : [];
+    if (keys.length === 0) return;
+    const ids = new Set<string>();
+    for (const key of keys) {
+      const b = blockByKey.get(key);
+      for (const m of b?.members ?? []) ids.add(m.id);
+    }
+    if (ids.size === 0) return;
+    const next = activities.filter((x) => !ids.has(x.id));
+    const err = commitActive(next, `Deleted ${ids.size} activities`);
+    setSelectedKeys(new Set());
+    setSelectedKey(null);
+    if (err) setToast({ message: err });
+    else notify({ message: `Deleted ${ids.size} activities. `, undoLabel: "Undo", onUndo: doUndo });
+  };
+
   const duplicateBlock = (block: MergedBlock) => {
     const dur = block.endTime - block.startTime;
     const start = block.endTime;
@@ -581,17 +603,19 @@ export default function App() {
       const next = [...activities, ...r.activities];
       const hit = r.activities.flatMap((c) => conflictsForCandidate(c, activities));
       if (hit.length > 0) {
+        // The conflict dialog owns the outcome: no success toast until the
+        // user confirms the merge.
         setPending({
           label: `Imported ${r.imported} (merged into ${active.name})`,
           next: { timetables: withActive(next), categories },
           conflicts: describeConflicts(hit, categories),
         });
-      } else {
-        const err = commitActive(next, `Imported ${r.imported} (merged into ${active.name})`);
-        if (err) {
-          setToast({ message: err });
-          return;
-        }
+        return;
+      }
+      const err = commitActive(next, `Imported ${r.imported} (merged into ${active.name})`);
+      if (err) {
+        setToast({ message: err });
+        return;
       }
     }
     notify({
@@ -610,6 +634,7 @@ export default function App() {
         bytes,
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       );
+      if (r.cancelled) return;
       if (!r.ok) setToast({ message: r.error ?? "Export failed." });
       else notify({ message: "Excel exported." });
     } catch (e) {
@@ -619,6 +644,7 @@ export default function App() {
 
   const doExportCsv = async () => {
     const r = await saveFile(`${active.name}.csv`, encodeText(activitiesToCsv(activities, categories)), "text/csv");
+    if (r.cancelled) return;
     if (!r.ok) setToast({ message: r.error ?? "Export failed." });
     else notify({ message: "CSV exported." });
   };
@@ -629,6 +655,7 @@ export default function App() {
       encodeText(createBackup(stateRef.current)),
       "application/json",
     );
+    if (r.cancelled) return;
     if (!r.ok) setToast({ message: r.error ?? "Backup failed." });
     else notify({ message: "Backup saved." });
   };
@@ -644,6 +671,13 @@ export default function App() {
     if (!window.confirm(`Restore backup from ${parsed.data.exportedAt}? A restore point of the current data is saved first.`)) return;
     pushRestorePoint("Before JSON restore");
     const d = parsed.data;
+    // Route through commit so the pre-restore state is on the undo stack and
+    // the Undo toast actually reverts the restore.
+    const err = commit({ timetables: d.timetables, categories: d.categories }, "Restored backup");
+    if (err) {
+      setToast({ message: err });
+      return;
+    }
     setState((s) => ({
       ...s,
       timetables: d.timetables,
@@ -751,14 +785,18 @@ export default function App() {
 
   // ---------- reminders (V2 §21) ----------
 
-  const tryNotify = async (title: string, body: string) => {
+  /** Returns true only when a system notification was actually delivered. */
+  const tryNotify = async (title: string, body: string): Promise<boolean> => {
     try {
       const { isPermissionGranted, requestPermission, sendNotification } = await import("@tauri-apps/plugin-notification");
       let granted = await isPermissionGranted();
       if (!granted) granted = (await requestPermission()) === "granted";
-      if (granted) await sendNotification({ title, body });
+      if (!granted) return false;
+      await sendNotification({ title, body });
+      return true;
     } catch {
       // In-app banner below is the reliable fallback.
+      return false;
     }
   };
 
@@ -778,9 +816,18 @@ export default function App() {
     }
   };
 
-  const testNotification = () => {
-    setToast({ message: "Test notification sent — check your system notifications and the banner here." });
-    void tryNotify("Time Flow", "Notifications are working on this device.");
+  const testNotification = async () => {
+    const sent = await tryNotify("Time Flow", "Notifications are working on this device.");
+    if (sent) {
+      setToast({ message: "Test notification sent — check your system notifications and the banner here." });
+    } else {
+      setToast({
+        message:
+          typeof Notification !== "undefined" && Notification.permission === "denied"
+            ? "Notifications are blocked for Time Flow — allow them in your system settings. The in-app banner still works."
+            : "No system notification was delivered on this device — the in-app banner still works.",
+      });
+    }
   };
 
   // ---------- weekly rollover (V2 §22) ----------
@@ -914,8 +961,8 @@ export default function App() {
       optionalWorkOverride: "inherit",
       startEnabled: true,
       endEnabled: true,
-      startLead: 5,
-      endLead: 5,
+      startLead: settings.reminderDefaults.startLead,
+      endLead: settings.reminderDefaults.endLead,
       memberCount: 1,
     });
   };
@@ -954,6 +1001,12 @@ export default function App() {
   };
 
   const clearAll = () => {
+    const count = activities.length;
+    if (count === 0) {
+      setToast({ message: "This timetable has no activities." });
+      return;
+    }
+    if (!window.confirm(`Remove all ${count} activities from “${active.name}”? You can undo this.`)) return;
     const err = commitActive([], "Removed all activities");
     if (err) setToast({ message: err });
     else notify({ message: "Removed all activities. ", undoLabel: "Undo", onUndo: doUndo });
@@ -966,11 +1019,11 @@ export default function App() {
 
   const openEditFor = (block: MergedBlock) => {
     setMenu(null);
-    setEditor({ ...draftFromActivity(block.members[0], block.members.length) });
+    setEditor({ ...draftFromActivity(block.members[0], block.members.length, settings.reminderDefaults) });
   };
 
   const openEditActivity = (a: Activity) => {
-    setEditor(draftFromActivity(a, 1));
+    setEditor(draftFromActivity(a, 1, settings.reminderDefaults));
   };
 
   const splitBlock = (block: MergedBlock) => {
@@ -978,7 +1031,7 @@ export default function App() {
     // portion so it can diverge independently.
     setMenu(null);
     const tail = block.members[block.members.length - 1];
-    setEditor(draftFromActivity(tail, 1));
+    setEditor(draftFromActivity(tail, 1, settings.reminderDefaults));
     say(`Split: editing ${nameOf(tail)} ${formatTime(tail.startTime)}–${formatTime(tail.endTime)} independently`);
   };
 
@@ -1066,7 +1119,19 @@ export default function App() {
           )}
           <span style={{ flex: 1 }} />
           {timer && screen !== "today" && (
-            <button type="button" className="btn" onClick={() => setScreen("today")} title="Open timer">
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                // The timer may belong to another timetable; switch to it so
+                // the Today bar (and Finish) stays reachable.
+                if (timer.timetableId !== active.id && timetables.some((t) => t.id === timer.timetableId)) {
+                  switchTimetable(timer.timetableId);
+                }
+                setScreen("today");
+              }}
+              title="Open timer"
+            >
               ⏱ {formatElapsed(timerElapsedSec(timer, epochMs))} · Finish…
             </button>
           )}
@@ -1076,6 +1141,14 @@ export default function App() {
           <button type="button" className="btn" onClick={() => setFocusMode((v) => !v)} title="Focus mode — timetable only (F11)">⛶</button>
           <button type="button" className="btn" onClick={() => setSettingsOpen(true)}>⚙</button>
         </div>
+
+        {selectedKeys.size > 1 && (
+          <div className="notice" role="status" style={{ margin: "8px 14px 0", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <strong>{selectedKeys.size} activities selected</strong>
+            <button type="button" className="btn small danger" onClick={deleteSelected}>Delete selected</button>
+            <button type="button" className="btn small" onClick={() => { setSelectedKeys(new Set()); setSelectedKey(null); }}>Clear selection</button>
+          </div>
+        )}
 
         {swapFrom && (
           <div className="notice" role="alert" style={{ margin: "8px 14px 0" }}>
@@ -1161,7 +1234,7 @@ export default function App() {
               deadlines={deadlines}
               categories={categories}
               record={weekRecord}
-              timer={timer && timer.timetableId === active.id ? timer : null}
+              timer={timer}
               epochMs={epochMs}
               clockFormat={settings.clockFormat}
               today={today}
@@ -1250,6 +1323,9 @@ export default function App() {
           activities={activities}
           categories={categories.length ? categories : DEFAULT_CATEGORIES}
           clockFormat={settings.clockFormat}
+          visibleStart={settings.visibleStartMinutes}
+          visibleEnd={settings.visibleEndMinutes}
+          defaultLeads={settings.reminderDefaults}
           existingNames={existingNames}
           existingSubjects={existingSubjects}
           onSave={saveFromEditor}

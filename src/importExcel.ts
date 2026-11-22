@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import type { Weekday } from "./types";
 import { defaultCategoryForName } from "./categories";
+import { minutesFromCsvTime, weekdayFromCsvName } from "./exportCsv";
 
 // Excel import analyser — spec §16. Tuned against the real reference
 // workbook (inspected 2026-10-14): one sheet, weekday section Mon–Fri with
@@ -181,9 +182,53 @@ function mergeSpans(ws: ExcelJS.Worksheet): Map<string, { startRow: number; endR
 export async function analyzeExcel(data: Uint8Array): Promise<SheetPlan[]> {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load(data as unknown as ArrayBuffer);
+  // A "Data" sheet (written by our own exporter) is already the flat, exact
+  // representation — parse it directly instead of guessing at a visual grid.
   const plans: SheetPlan[] = [];
-  wb.eachSheet((ws) => plans.push(analyzeSheet(ws)));
+  wb.eachSheet((ws) => {
+    if (ws.name.trim().toLowerCase() === "data") {
+      const flat = analyzeFlatSheet(ws);
+      if (flat) plans.push(flat);
+    } else {
+      plans.push(analyzeSheet(ws));
+    }
+  });
   return plans;
+}
+
+/** Flat sheet with Name/Weekday/Start/End/Category/Subject/Notes/OptionalWork. */
+function analyzeFlatSheet(ws: ExcelJS.Worksheet): SheetPlan | null {
+  const norm = (v: unknown) => (v === null || v === undefined ? "" : String(v).trim());
+  const header = (ws.getRow(1).values as unknown[]).slice(1).map((v) => norm(v).toLowerCase());
+  const want = ["name", "weekday", "start", "end", "category"];
+  if (!want.every((w) => header.includes(w))) return null;
+  const col = (name: string) => header.indexOf(name);
+  const proposals: ImportProposal[] = [];
+  const rows = Math.min(ws.rowCount, 2000);
+  for (let r = 2; r <= rows; r++) {
+    const v = (name: string) => norm(ws.getRow(r).getCell(col(name) + 1).value);
+    const day = weekdayFromCsvName(v("weekday"));
+    const start = minutesFromCsvTime(v("start"));
+    const end = minutesFromCsvTime(v("end"));
+    if (day === null && start === null && end === null) continue;
+    const ow = v("optionalwork").toLowerCase();
+    proposals.push({
+      key: `data-${r}`,
+      day: day ?? 0,
+      start,
+      end,
+      name: v("name"),
+      categoryId: "",
+      subject: v("subject"),
+      notes: v("notes"),
+      optionalWorkOverride: ow === "yes" || ow === "true" || ow === "1" ? "yes" : ow === "no" || ow === "false" || ow === "0" ? "no" : "inherit",
+      excluded: false,
+      warnings: [],
+      suggestedStart: null,
+      suggestedEnd: null,
+    });
+  }
+  return { sheetName: ws.name, proposals, warnings: [], skippedSummaries: 0 };
 }
 
 function analyzeSheet(ws: ExcelJS.Worksheet): SheetPlan {

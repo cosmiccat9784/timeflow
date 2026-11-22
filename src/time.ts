@@ -33,6 +33,15 @@ export function formatTime(minutes: number, clock: "12h" | "24h" = "12h"): strin
   return `${h12}:${mm} ${suffix}`;
 }
 
+/**
+ * Label for a time option in a picker. Midnight appears twice in a
+ * 0–1440 list (start of day and end of day), so the end-of-day entry is
+ * labelled distinctly instead of showing the same "12:00 am" twice.
+ */
+export function formatTimeOption(minutes: number, clock: "12h" | "24h" = "12h"): string {
+  return minutes >= MINUTES_PER_DAY ? "Midnight (end of day)" : formatTime(minutes, clock);
+}
+
 /** "16:00" / "4:00 pm" / "4pm" → minutes, or null if unparseable. */
 export function parseTimeInput(input: string): number | null {
   const s = input.trim().toLowerCase().replace(/\s+/g, " ");

@@ -110,6 +110,31 @@ export async function timetableToXlsx(
   const weekend = timetable.activities.filter((a) => a.weekday === 5 || a.weekday === 6);
   if (weekend.length > 0) writeSection([5, 6], 60);
 
+  // Flat data sheet so the app's own export round-trips through the importer.
+  // The visual sheet above is for humans; this one is the machine format.
+  const data = wb.addWorksheet("Data");
+  data.columns = [
+    { width: 24 }, { width: 12 }, { width: 10 }, { width: 10 },
+    { width: 16 }, { width: 18 }, { width: 28 }, { width: 14 },
+  ];
+  data.addRow(["Name", "Weekday", "Start", "End", "Category", "Subject", "Notes", "OptionalWork"]);
+  const sorted = [...timetable.activities].sort((a, b) =>
+    a.weekday !== b.weekday ? a.weekday - b.weekday : a.startTime - b.startTime,
+  );
+  const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+  for (const a of sorted) {
+    data.addRow([
+      a.name,
+      WEEKDAY_NAMES[a.weekday],
+      hhmm(a.startTime),
+      hhmm(a.endTime),
+      catOf(a.categoryId)?.name ?? "",
+      a.subject ?? "",
+      a.notes ?? "",
+      a.optionalWorkOverride === "yes" ? "yes" : a.optionalWorkOverride === "no" ? "no" : "",
+    ]);
+  }
+
   // Legend.
   ws.getCell(row, 1).value = "Key:";
   ws.getCell(row, 1).font = { bold: true };

@@ -27,7 +27,11 @@ export interface EditorDraft {
   memberCount: number;
 }
 
-export function draftFromActivity(a: Activity, memberCount = 1): EditorDraft {
+export function draftFromActivity(
+  a: Activity,
+  memberCount = 1,
+  defaultLeads: { startLead: number; endLead: number } = { startLead: 5, endLead: 5 },
+): EditorDraft {
   return {
     activityId: a.id,
     name: a.name,
@@ -41,16 +45,29 @@ export function draftFromActivity(a: Activity, memberCount = 1): EditorDraft {
     optionalWorkOverride: a.optionalWorkOverride ?? "inherit",
     startEnabled: a.reminderPreferences?.startEnabled ?? true,
     endEnabled: a.reminderPreferences?.endEnabled ?? true,
-    startLead: a.reminderPreferences?.startLeadMinutes ?? 5,
-    endLead: a.reminderPreferences?.endLeadMinutes ?? 5,
+    startLead: a.reminderPreferences?.startLeadMinutes ?? defaultLeads.startLead,
+    endLead: a.reminderPreferences?.endLeadMinutes ?? defaultLeads.endLead,
     memberCount,
   };
 }
 
-export function draftToActivity(d: EditorDraft, categories: Category[]): Activity | null {
+export function draftToActivity(
+  d: EditorDraft,
+  categories: Category[],
+  defaultLeads?: { startLead: number; endLead: number },
+): Activity | null {
   const cat = categoryById(categories, d.categoryId);
   if (!cat) return null;
   const t = nowIso();
+  // Persist reminder preferences only when they differ from the global
+  // defaults. Otherwise the reminder engine is free to follow Settings, so
+  // changing Settings still affects every activity that never overrode it.
+  const matchesDefaults =
+    !!defaultLeads &&
+    d.startEnabled &&
+    d.endEnabled &&
+    d.startLead === defaultLeads.startLead &&
+    d.endLead === defaultLeads.endLead;
   return {
     id: d.activityId ?? uid("act"),
     name: d.name.trim(),
@@ -61,7 +78,7 @@ export function draftToActivity(d: EditorDraft, categories: Category[]): Activit
     endTime: d.endTime,
     notes: d.notes.trim() || undefined,
     optionalWorkOverride: d.optionalWorkOverride === "inherit" ? undefined : d.optionalWorkOverride,
-    reminderPreferences: {
+    reminderPreferences: matchesDefaults ? undefined : {
       startEnabled: d.startEnabled,
       endEnabled: d.endEnabled,
       startLeadMinutes: d.startLead,
@@ -123,9 +140,13 @@ function TimeRangePicker({
   const tap = (t: number) => {
     const a = anchor;
     if (a === null || t < a) {
+      // First tap: start here, one slot long.
       setAnchor(t);
       onPick(t, Math.min(t + 15, 1440));
     } else {
+      // Second tap: the tapped quarter is the last one included, so
+      // 16:00 → 17:00 gives 16:00–17:15 (an hour and a quarter) — matching
+      // how the grid reads "tap the 17:00 square to end after it".
       onPick(a, Math.min(t + 15, 1440));
     }
   };
@@ -176,6 +197,7 @@ export function ActivityEditor({
   clockFormat,
   visibleStart = 360,
   visibleEnd = 1320,
+  defaultLeads,
   existingNames,
   existingSubjects,
   onSave,
@@ -189,6 +211,7 @@ export function ActivityEditor({
   clockFormat: ClockFormat;
   visibleStart?: number;
   visibleEnd?: number;
+  defaultLeads?: { startLead: number; endLead: number };
   existingNames: string[];
   existingSubjects: string[];
   onSave: (activity: Activity) => string | null;
@@ -231,10 +254,10 @@ export function ActivityEditor({
   const previewErrors = useMemo(() => {
     if (d.activityId === null && !d.timeSet)
       return [{ field: "time", message: "Tap the grid below to choose the time." }];
-    const a = draftToActivity(d, categories);
+    const a = draftToActivity(d, categories, defaultLeads);
     if (!a) return [{ field: "categoryId", message: "The selected category does not exist." }];
     return validateActivity(a, categories);
-  }, [d, categories]);
+  }, [d, categories, defaultLeads]);
 
   const duration = d.endTime - d.startTime;
 
@@ -243,7 +266,7 @@ export function ActivityEditor({
       setError("Tap the grid to choose a start and end time first.");
       return;
     }
-    const a = draftToActivity(d, categories);
+    const a = draftToActivity(d, categories, defaultLeads);
     if (!a) {
       setError("The selected category does not exist.");
       return;

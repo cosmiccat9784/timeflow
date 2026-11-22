@@ -609,6 +609,8 @@ button { cursor: pointer; }
 }
 .custom-select-list button:hover, .custom-select-list button:focus-visible { background: var(--bg-panel); }
 .custom-select-list button.current { color: var(--accent-orange); font-weight: 700; }
+.custom-select-list button.active { background: var(--bg-panel); }
+.custom-select-list:focus { outline: none; }
 
 /* Print — clean timetable only */
 @media print {

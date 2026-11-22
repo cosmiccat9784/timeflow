@@ -55,16 +55,23 @@ export async function pickFile(
   return browserPick(extensions.map((e) => `.${e}`).join(","));
 }
 
+export interface SaveResult {
+  ok: boolean;
+  /** True when the user dismissed the save dialog — no file was written. */
+  cancelled?: boolean;
+  error?: string;
+}
+
 export async function saveFile(
   suggestedName: string,
   data: Uint8Array,
   mime: string,
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<SaveResult> {
   if (isTauri()) {
     try {
       const { save } = await import("@tauri-apps/plugin-dialog");
       const path = await save({ defaultPath: suggestedName });
-      if (!path) return { ok: true }; // user cancelled — not an error
+      if (!path) return { ok: false, cancelled: true };
       const { writeFile } = await import("@tauri-apps/plugin-fs");
       await writeFile(path, data);
       return { ok: true };

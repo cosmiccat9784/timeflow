@@ -1,6 +1,7 @@
 import type { Category, GlobalSettings, RestorePoint } from "../types";
+import { SCHEMA_VERSION } from "../types";
 import { APP_VERSION } from "../store";
-import { formatTime } from "../time";
+import { formatTimeOption } from "../time";
 import { CustomSelect } from "./CustomSelect";
 
 function timeOptions(): number[] {
@@ -8,6 +9,10 @@ function timeOptions(): number[] {
   for (let t = 0; t <= 1440; t += 60) out.push(t);
   return out;
 }
+
+/** Midnight appears twice in the option list (start of day and end of day);
+ * label the end-of-day entry so the two are distinguishable. */
+const timeOptionLabel = formatTimeOption;
 
 function toHHMM(m: number): string {
   return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
@@ -51,7 +56,7 @@ export function SettingsPanel({
           <CustomSelect
             id="set-vis-start"
             value={String(settings.visibleStartMinutes)}
-            options={timeOptions().map((t) => ({ value: String(t), label: formatTime(t, settings.clockFormat) }))}
+            options={timeOptions().map((t) => ({ value: String(t), label: timeOptionLabel(t, settings.clockFormat) }))}
             onChange={(v) => onChange({ ...settings, visibleStartMinutes: Number(v) })}
             ariaLabel="Visible day starts"
           />
@@ -61,7 +66,7 @@ export function SettingsPanel({
           <CustomSelect
             id="set-vis-end"
             value={String(settings.visibleEndMinutes)}
-            options={timeOptions().map((t) => ({ value: String(t), label: formatTime(t, settings.clockFormat) }))}
+            options={timeOptions().map((t) => ({ value: String(t), label: timeOptionLabel(t, settings.clockFormat) }))}
             onChange={(v) => onChange({ ...settings, visibleEndMinutes: Number(v) })}
             ariaLabel="Visible day ends"
           />
@@ -200,7 +205,7 @@ export function SettingsPanel({
 
         <div className="settings-row">
           <span>Time Flow version</span>
-          <span>{APP_VERSION} · schema v2 · English (Australia), week starts Monday</span>
+          <span>{APP_VERSION} · schema v{SCHEMA_VERSION} · English (Australia), week starts Monday</span>
         </div>
 
         <div className="modal-actions">

@@ -56,10 +56,16 @@ export function weekTotals(
   activities: Activity[],
   categories: Category[],
 ): { study: number; optionalWork: number } {
-  return {
-    study: unionMinutes(intervalsFor(activities, categories, null, "study")),
-    optionalWork: unionMinutes(intervalsFor(activities, categories, null, "optionalWork")),
-  };
+  // Union per day, then sum the days. Unioning across all seven days would
+  // count the same clock time only once even when it recurs on several days.
+  let study = 0;
+  let optionalWork = 0;
+  for (let d = 0; d < 7; d++) {
+    const t = dayTotals(activities, categories, d as Weekday);
+    study += t.study;
+    optionalWork += t.optionalWork;
+  }
+  return { study, optionalWork };
 }
 
 export function allDayTotals(
