@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { isAligned, snapToSlot, parseTimeInput, formatTime, formatDuration, isValidDuration, clampDay, SLOT } from "./time";
-import { validateActivity, validateCategories, validateDeadline } from "./validation";
+import { isAligned, snapToSlot, parseTimeInput, formatTime, formatDuration, isValidDuration, clampDay } from "./time";
+import { validateActivity, validateDeadline } from "./validation";
 import { DEFAULT_CATEGORIES } from "./categories";
 import { computeMergedBlocks } from "./merge";
 import { findConflicts, assignLanes, overlaps } from "./conflicts";
-import { dayTotals, weekTotals, unionMinutes } from "./totals";
+import { dayTotals } from "./totals";
 import { daysUntil, relativeLabel, sortByNearness, nextWeekdayDate } from "./deadlines";
-import { mondayOfWeek, weekIdFor, currentWeekId, recordKey, freshWeekRecord, withCompletion, withMinutes, withDelivered, timerElapsedSec, formatElapsed } from "./records";
+import { weekIdFor, recordKey, freshWeekRecord, withCompletion, timerElapsedSec, formatElapsed } from "./records";
 import { computeDueReminders } from "./reminders";
 import { createBackup, parseBackup } from "./backup";
 import { migrateState, defaultSettings, defaultState, APP_VERSION } from "./store";
 import { UndoStack } from "./undo";
-import { displayName } from "./types";
+// displayName removed - not needed
 import type { Activity } from "./types";
 import * as fs from "fs";
 import * as path from "path";
