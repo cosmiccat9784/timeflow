@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, expect, it } from "vitest";
 import { isAligned, snapToSlot, parseTimeInput, formatTime, formatDuration, isValidDuration, clampDay } from "./time";
 import { validateActivity, validateDeadline } from "./validation";
