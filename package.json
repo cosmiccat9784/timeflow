@@ -1,7 +1,7 @@
 {
   "name": "time-flow",
   "private": true,
-  "version": "0.3.8",
+  "version": "0.3.9",
   "type": "module",
   "description": "Time Flow — visual weekly timetable planner (Tauri 2 desktop app)",
   "scripts": {
