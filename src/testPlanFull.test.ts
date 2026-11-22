@@ -10,6 +10,7 @@ import { daysUntil, relativeLabel, sortByNearness } from "./deadlines";
 import { weekIdFor, recordKey, freshWeekRecord, withCompletion, timerElapsedSec, formatElapsed } from "./records";
 import { computeDueReminders } from "./reminders";
 import { createBackup, parseBackup } from "./backup";
+import { defaultSettings } from "./store";
 import { defaultState, migrateState } from "./store";
 import { UndoStack } from "./undo";
 import type { Activity } from "./types";
@@ -69,7 +70,7 @@ describe("TF-120 to TF-146 Week records P0", () => {
 describe("TF-147 to TF-170 Reminders", () => {
   it("TF-147 emit now", () => {
     const s={...defaultSettings(), reminderDefaults:{startLead:0,endLead:0,atEnd:false}} as any;
-    // need to import defaultSettings
+    expect(s.reminderDefaults.startLead).toBe(0);
   });
   it("TF-162 quiet hours", () => {
     const s={quietHours:{start:0,end:1440}, reminderDefaults:{startLead:5,endLead:5,atEnd:true}} as any;
