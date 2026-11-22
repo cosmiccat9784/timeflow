@@ -80,8 +80,10 @@ describe("macOS packaging — notarisation-free but not damaged", () => {
     const y = workflow();
     expect(y).toContain("hdiutil attach");
     expect(y).toContain("hdiutil detach");
+    // Explicit mountpoint avoids fragile parsing of hdiutil output.
+    expect(y).toContain('-mountpoint "$MNT"');
     const attach = y.indexOf("hdiutil attach");
-    const verify = y.indexOf('codesign --verify --deep --strict "$MOUNT/Time Flow.app"');
+    const verify = y.indexOf('codesign --verify --deep --strict --verbose=2 "$APP_IN_DMG"');
     expect(verify).toBeGreaterThan(attach);
   });
 

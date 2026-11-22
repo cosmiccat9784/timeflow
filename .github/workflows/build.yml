@@ -164,10 +164,16 @@ jobs:
           rm -f "$DMG"
           hdiutil create -volname "Time Flow" -srcfolder "$APP" -ov -format UDZO "$DMG"
           hdiutil verify "$DMG"
-          # Prove the app inside the image is signed too.
-          MOUNT=$(hdiutil attach "$DMG" -nobrowse -readonly | tail -1 | awk '{$1=""; $2=""; sub(/^  */,""); print}')
-          codesign --verify --deep --strict "$MOUNT/Time Flow.app"
-          hdiutil detach "$MOUNT"
+          # Prove the app inside the image is signed too (explicit mountpoint so
+          # there is no fragile parsing of hdiutil's output).
+          MNT="$RUNNER_TEMP/dmg-mnt"
+          mkdir -p "$MNT"
+          hdiutil attach "$DMG" -nobrowse -readonly -mountpoint "$MNT"
+          APP_IN_DMG=$(find "$MNT" -maxdepth 1 -name '*.app' -print -quit)
+          echo "App inside DMG: $APP_IN_DMG"
+          test -n "$APP_IN_DMG"
+          codesign --verify --deep --strict --verbose=2 "$APP_IN_DMG"
+          hdiutil detach "$MNT"
       - name: Verify Developer ID signature and notarization
         if: runner.os == 'macOS' && env.APPLE_SIGNING_IDENTITY != ''
         run: |
