@@ -90,21 +90,6 @@ jobs:
             extra: ""
             bundle_dir: src-tauri/target/release/bundle
     runs-on: ${{ matrix.os }}
-    env:
-      # Optional Developer ID path. When these secrets are present Tauri signs
-      # and notarizes properly; when they are absent the macOS step falls back
-      # to an ad-hoc signature (plus the xattr workaround documented in README).
-      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-      APPLE_ID: ${{ secrets.APPLE_ID }}
-      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-      # Optional Windows Authenticode certificate (base64 .pfx). When present
-      # the installer is signed and SmartScreen shows the publisher name.
-      WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -115,9 +100,23 @@ jobs:
       - name: Add macOS targets
         if: runner.os == 'macOS'
         run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      # Secrets are read here rather than at job level: an empty APPLE_CERTIFICATE
+      # in the environment makes Tauri attempt an import of zero bytes and fail.
       - name: Import Apple Developer ID certificate
-        if: runner.os == 'macOS' && env.APPLE_CERTIFICATE != ''
+        if: runner.os == 'macOS'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
+          if [ -z "${APPLE_CERTIFICATE:-}" ]; then
+            echo "No Apple certificate secret — using ad-hoc signing."
+            exit 0
+          fi
           set -euo pipefail
           KEYCHAIN="$RUNNER_TEMP/build.keychain-db"
           echo "$APPLE_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/cert.p12"
@@ -128,6 +127,14 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
           security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
           rm -f "$RUNNER_TEMP/cert.p12"
+          # Hand the identity to the build step; APPLE_CERTIFICATE is deliberately
+          # not re-exported so Tauri does not try to import it again.
+          {
+            echo "APPLE_SIGNING_IDENTITY=$APPLE_SIGNING_IDENTITY"
+            echo "APPLE_ID=$APPLE_ID"
+            echo "APPLE_PASSWORD=$APPLE_PASSWORD"
+            echo "APPLE_TEAM_ID=$APPLE_TEAM_ID"
+          } >> "$GITHUB_ENV"
       - name: Install Linux deps
         if: runner.os == 'Linux'
         run: |
@@ -142,7 +149,7 @@ jobs:
       # This runs only on the ad-hoc path; with a Developer ID certificate Tauri
       # already signed and notarized the bundle and re-signing would break it.
       - name: Ad-hoc sign and repackage macOS DMG
-        if: runner.os == 'macOS' && env.APPLE_CERTIFICATE == ''
+        if: runner.os == 'macOS' && env.APPLE_SIGNING_IDENTITY == ''
         run: |
           set -euo pipefail
           BUNDLE="${{ matrix.bundle_dir }}"
@@ -162,7 +169,7 @@ jobs:
           codesign --verify --deep --strict "$MOUNT/Time Flow.app"
           hdiutil detach "$MOUNT"
       - name: Verify Developer ID signature and notarization
-        if: runner.os == 'macOS' && env.APPLE_CERTIFICATE != ''
+        if: runner.os == 'macOS' && env.APPLE_SIGNING_IDENTITY != ''
         run: |
           set -euo pipefail
           APP=$(find "${{ matrix.bundle_dir }}/macos" -maxdepth 1 -name '*.app' -print -quit)
@@ -172,10 +179,17 @@ jobs:
       # Authenticode-sign the installer so Windows shows the publisher name
       # instead of "Unknown publisher".
       - name: Sign Windows installer
-        if: runner.os == 'Windows' && env.WINDOWS_CERTIFICATE != ''
+        if: runner.os == 'Windows'
         shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
         run: |
           $ErrorActionPreference = 'Stop'
+          if (-not $env:WINDOWS_CERTIFICATE) {
+            Write-Host 'No Windows certificate secret — installer stays unsigned (SmartScreen will show "Unknown publisher").'
+            exit 0
+          }
           $pfx = Join-Path $env:RUNNER_TEMP 'cert.pfx'
           [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
           $files = Get-ChildItem -Path '${{ matrix.bundle_dir }}' -Recurse -Include *.exe

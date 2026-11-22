@@ -41,7 +41,7 @@ describe("macOS packaging — notarisation-free but not damaged", () => {
     const y = workflow();
     expect(y).toContain("codesign --force --deep --sign -");
     expect(y).toContain("codesign --verify --deep --strict");
-    expect(y).toContain("if: runner.os == 'macOS' && env.APPLE_CERTIFICATE == ''");
+    expect(y).toContain("env.APPLE_SIGNING_IDENTITY == ''");
   });
 
   it("supports a Developer ID certificate when secrets are configured", () => {
@@ -55,10 +55,19 @@ describe("macOS packaging — notarisation-free but not damaged", () => {
 
   it("does not re-sign with ad-hoc when a Developer ID is present", () => {
     const y = workflow();
-    const guard = y.indexOf("if: runner.os == 'macOS' && env.APPLE_CERTIFICATE == ''");
+    const guard = y.indexOf("env.APPLE_SIGNING_IDENTITY == ''");
     const adHoc = y.indexOf("codesign --force --deep --sign -");
     expect(guard).toBeGreaterThan(-1);
     expect(adHoc).toBeGreaterThan(guard);
+  });
+
+  it("never exports APPLE_CERTIFICATE to the build step", () => {
+    // An empty APPLE_CERTIFICATE in the job environment makes Tauri attempt to
+    // import an empty PKCS#12 and fail the whole macOS build, so the secret is
+    // only passed to the dedicated import step.
+    const y = workflow();
+    expect(y).not.toMatch(/\n {4}env:\r?\n {6}APPLE_CERTIFICATE:/);
+    expect(y).toContain("APPLE_CERTIFICATE is deliberately");
   });
 
   it("rebuilds the DMG from the signed bundle", () => {
@@ -114,15 +123,17 @@ describe("Windows publisher identity", () => {
     expect(y).toContain("WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}");
     expect(y).toContain("signtool sign /fd SHA256");
     expect(y).toContain("signtool verify /pa");
-    expect(y).toContain("if: runner.os == 'Windows' && env.WINDOWS_CERTIFICATE != ''");
   });
 
-  it("the Windows signing step does not run without a certificate", () => {
+  it("the Windows signing step is skipped gracefully without a certificate", () => {
     // SmartScreen still shows "Unknown publisher" for unsigned builds; the
-    // guard keeps CI green in that case instead of failing on a missing pfx.
+    // guard keeps CI green instead of failing on a missing pfx.
     const y = workflow();
-    const guard = y.indexOf("env.WINDOWS_CERTIFICATE != ''");
-    const sign = y.indexOf("signtool sign /fd SHA256");
+    const step = y.slice(y.indexOf("name: Sign Windows installer"));
+    expect(step).toContain("if (-not $env:WINDOWS_CERTIFICATE)");
+    expect(step).toContain("exit 0");
+    const guard = step.indexOf("if (-not $env:WINDOWS_CERTIFICATE)");
+    const sign = step.indexOf("signtool sign /fd SHA256");
     expect(guard).toBeGreaterThan(-1);
     expect(sign).toBeGreaterThan(guard);
   });
