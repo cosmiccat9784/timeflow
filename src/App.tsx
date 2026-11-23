@@ -31,6 +31,7 @@ import { ProgressView } from "./components/ProgressView";
 import { RecapModal, recapToCsv, type RecapData } from "./components/RecapModal";
 import { PrioritiesView } from "./components/PrioritiesView";
 import { CustomSelect } from "./components/CustomSelect";
+import { accentVars, backgroundVars, usesCustomBackground } from "./theme";
 import { todayKey } from "./deadlines";
 
 interface PendingOp {
@@ -95,10 +96,18 @@ export default function App() {
   const wkKey = recordKey(active.id, curWeek);
   const weekRecord: WeekRecord = state.weekRecords[wkKey] ?? freshWeekRecord(active.id, curWeek);
 
-  // Apply theme to the document (dark mode via data-theme + CSS vars).
+  // Apply theme + appearance to the document (data-theme attribute for the
+  // palette, inline custom properties for accent and background).
   useEffect(() => {
-    document.documentElement.dataset.theme = settings.theme;
-  }, [settings.theme]);
+    const root = document.documentElement;
+    root.dataset.theme = settings.theme;
+    const base = settings.theme === "dark"
+      ? { main: "#050505", sidebar: "#181818", panel: "#202020" }
+      : { main: "#FAFAF7", sidebar: "#FFFFFF", panel: "#FFFFFF" };
+    const vars = { ...accentVars(settings.appearance.accent), ...backgroundVars(settings.appearance, base) };
+    for (const [name, value] of Object.entries(vars)) root.style.setProperty(name, value);
+    root.dataset.customBg = usesCustomBackground(settings.appearance) ? "true" : "false";
+  }, [settings.theme, settings.appearance]);
 
   // Current-time + rollover + reminder tick (30s).
   useEffect(() => {

@@ -106,6 +106,16 @@ export type ClockFormat = "12h" | "24h";
 
 export type Theme = "light" | "dark";
 
+/** Appearance controls stored alongside the other global settings. */
+export interface AppearanceSettings {
+  /** Accent hex, drives buttons, selection outlines and active menu items. */
+  accent: string;
+  backgroundMode: "theme" | "solid" | "image";
+  backgroundColour: string;
+  backgroundImage: string | null;
+  backgroundDim: number;
+}
+
 export interface QuietHours {
   start: number | null; // minutes from midnight, null = off
   end: number | null;
@@ -122,6 +132,8 @@ export interface GlobalSettings {
   visibleEndMinutes: number; // default 1320 (22:00)
   clockFormat: ClockFormat;
   theme: Theme;
+  /** accent colour, tinted background and optional wallpaper */
+  appearance: AppearanceSettings;
   /** quick-switch pair, default [study, personal] */
   switchPair: [string, string];
   /** routine confirmation toasts (Switched, Deleted…); errors always show */

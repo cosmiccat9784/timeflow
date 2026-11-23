@@ -680,6 +680,59 @@ input[type="color"]{appearance:none;-webkit-appearance:none;width:32px;height:32
 input[type="color"]::-webkit-color-swatch-wrapper{padding:0}
 input[type="color"]::-webkit-color-swatch{border:0;border-radius:7px}
 .block.selected{outline:2px solid var(--accent-orange);outline-offset:-2px}
+/* ---------- Appearance: accent swatches, wallpaper, translucent chrome ---------- */
+.swatch-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.swatch-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+.swatch-btn:hover { transform: translateY(-1px); }
+.swatch-btn.current { border-color: var(--text-primary); box-shadow: 0 0 0 2px var(--bg-elevated) inset; }
+.settings-row-stack { align-items: flex-start; flex-direction: column; gap: 8px; }
+
+/* Custom background layer */
+.app { background-color: var(--app-bg, var(--bg-main)); }
+.app::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: var(--app-bg-image, none);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  pointer-events: none;
+  z-index: 0;
+}
+.app::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: var(--app-bg-dim, transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+[data-custom-bg="true"] .app > * { position: relative; z-index: 1; }
+[data-custom-bg="true"] .sidebar {
+  background: var(--bg-sidebar-a, var(--bg-sidebar));
+  backdrop-filter: blur(18px) saturate(120%);
+}
+[data-custom-bg="true"] .main { background: transparent; }
+[data-custom-bg="true"] .grid-wrap { background: transparent; }
+[data-custom-bg="true"] .toolbar { background: var(--bg-panel-a, var(--bg-toolbar)); backdrop-filter: blur(14px); }
+[data-custom-bg="true"] .day-head { background: var(--bg-panel-a, var(--bg-panel)); backdrop-filter: blur(10px); }
+[data-custom-bg="true"] .totals-card,
+[data-custom-bg="true"] .day-col { background: var(--bg-panel-a, var(--bg-panel)); }
+[data-custom-bg="true"] .modal,
+[data-custom-bg="true"] .menu { background: var(--bg-panel-a, var(--bg-elevated)); backdrop-filter: blur(20px); }
+@media print {
+  .app::before, .app::after { display: none !important; }
+}
 /* Safety net: any native select still in the tree stays dark */
 select{background:var(--bg-panel);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;min-height:44px;padding:8px 10px;color-scheme:dark}
 [data-theme="light"] select{color-scheme:light;background:#fff;color:#23272E;border-color:#E6E2D8}

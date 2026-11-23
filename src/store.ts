@@ -3,6 +3,7 @@ import { SCHEMA_VERSION, STORAGE_KEY, nowIso, uid } from "./types";
 import { DEFAULT_CATEGORIES, DEFAULT_SWITCH_PAIR, LEGACY_CATEGORY_NAMES } from "./categories";
 import { nextWeekdayDate } from "./deadlines";
 import { validateActivity, validateCategories, validateDeadline } from "./validation";
+import { DEFAULT_APPEARANCE, fillAppearance } from "./theme";
 
 export const APP_VERSION = "0.3.14";
 
@@ -13,6 +14,7 @@ export function defaultSettings(): GlobalSettings {
     visibleEndMinutes: 1320,
     clockFormat: "12h",
     theme: darkOS ? "dark" : "light",
+    appearance: { ...DEFAULT_APPEARANCE },
     switchPair: [...DEFAULT_SWITCH_PAIR] as [string, string],
     showToasts: true,
     quietHours: { start: 1320, end: 420 }, // 10pm–7am default
@@ -49,6 +51,7 @@ function fillSettings(s: Partial<GlobalSettings> | undefined): GlobalSettings {
     merged.switchPair = [...DEFAULT_SWITCH_PAIR] as [string, string];
   if (typeof merged.showToasts !== "boolean") merged.showToasts = true;
   if (merged.theme !== "light" && merged.theme !== "dark") merged.theme = "light";
+  merged.appearance = fillAppearance((merged as Partial<GlobalSettings>).appearance);
   if (!merged.quietHours || typeof merged.quietHours !== "object")
     merged.quietHours = { ...d.quietHours };
   if (!merged.reminderDefaults || typeof merged.reminderDefaults !== "object")
