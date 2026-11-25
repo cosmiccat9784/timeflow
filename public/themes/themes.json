@@ -76,7 +76,7 @@
       "accent": "#22D3EE",
       "highlight": "#A78BFA",
       "fonts": { "heading": "\"Inter\", system-ui, sans-serif" },
-      "background": { "mode": "image", "image": "aurora.svg", "dim": 55 },
+      "background": { "mode": "image", "image": "aurora.jpg", "dim": 55 },
       "builtin": true
     },
     {
