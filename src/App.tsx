@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import type { Activity, Category, Deadline, GlobalSettings, PersistedState, RestorePoint, Timetable, Weekday, WeekRecord } from "./types";
 import { WEEKDAY_NAMES, WEEKDAY_SHORT, displayName, nowIso, uid } from "./types";
 import { DEFAULT_CATEGORIES } from "./categories";
@@ -31,7 +31,15 @@ import { ProgressView } from "./components/ProgressView";
 import { RecapModal, recapToCsv, type RecapData } from "./components/RecapModal";
 import { PrioritiesView } from "./components/PrioritiesView";
 import { CustomSelect } from "./components/CustomSelect";
-import { accentVars, backgroundVars, usesCustomBackground } from "./theme";
+import { ThemesView } from "./components/ThemesView";
+import { parseThemesFile, resolveTheme, themeVars, usesCustomBackground, backgroundUrl } from "./themes";
+import type { ThemeDefinition } from "./themes";
+
+/** Used if themes.json cannot be read (offline first run, corrupt file). */
+const FALLBACK_THEMES: ThemeDefinition[] = [
+  { id: "dark", name: "Dark", base: "dark", accent: "#FF940E", highlight: "#22D3EE", background: { mode: "none" }, builtin: true },
+  { id: "light", name: "Light", base: "light", accent: "#FF940E", highlight: "#2E90FA", background: { mode: "none" }, builtin: true },
+];
 import { todayKey } from "./deadlines";
 
 interface PendingOp {
@@ -57,7 +65,7 @@ export default function App() {
   const activities = active.activities;
   const deadlines: Deadline[] = useMemo(() => active.deadlines ?? [], [active]);
 
-  const [screen, setScreen] = useState<"planner" | "today" | "progress" | "priorities">("planner");
+  const [screen, setScreen] = useState<"planner" | "today" | "progress" | "priorities" | "themes">("planner");
   const [plannerView, setPlannerView] = useState<"week" | "day">(() =>
     typeof window !== "undefined" && window.innerWidth < 1024 ? "day" : "week",
   );
@@ -96,18 +104,64 @@ export default function App() {
   const wkKey = recordKey(active.id, curWeek);
   const weekRecord: WeekRecord = state.weekRecords[wkKey] ?? freshWeekRecord(active.id, curWeek);
 
-  // Apply theme + appearance to the document (data-theme attribute for the
-  // palette, inline custom properties for accent and background).
+  // Themes: presets ship as JSON; imported themes live in state.
+  const [presetThemes, setPresetThemes] = useState<ThemeDefinition[]>(FALLBACK_THEMES);
+  const [themeLoadError, setThemeLoadError] = useState<string | null>(null);
+  const themes = useMemo(
+    () => [...presetThemes, ...(state.customThemes ?? [])],
+    [presetThemes, state.customThemes],
+  );
+
+  const loadThemes = useCallback(async () => {
+    try {
+      const res = await fetch("/themes/themes.json", { cache: "no-cache" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const parsed = parseThemesFile(await res.json());
+      if (!parsed.ok) throw new Error(parsed.error);
+      const folder = `themes/${parsed.file.backgroundsPath ?? "backgrounds"}`;
+      setPresetThemes(
+        parsed.file.themes.map((t) => ({
+          ...t,
+          builtin: true,
+          background: t.background
+            ? { ...t.background, image: t.background.image ? backgroundUrl(t.background.image, folder) ?? undefined : undefined }
+            : undefined,
+        })),
+      );
+      setThemeLoadError(null);
+    } catch (e) {
+      setThemeLoadError(
+        e instanceof Error ? `Could not load themes.json (${e.message}); using built-in presets.` : "Could not load themes.json.",
+      );
+    }
+  }, []);
+
+  useEffect(() => { void loadThemes(); }, [loadThemes]);
+
+  const activeTheme = themes.find((t) => t.id === settings.appearance.themeId) ?? themes[0] ?? FALLBACK_THEMES[0];
+  const applied = useMemo(
+    () =>
+      resolveTheme(activeTheme, {
+        accent: settings.appearance.accent || undefined,
+        highlight: settings.appearance.highlight || undefined,
+        font: settings.appearance.font || undefined,
+        backgroundMode:
+          settings.appearance.backgroundMode === "theme" ? undefined : settings.appearance.backgroundMode,
+        backgroundColour: settings.appearance.backgroundColour,
+        backgroundImage: settings.appearance.backgroundImage,
+        backgroundDim: settings.appearance.backgroundDim,
+      }),
+    [activeTheme, settings.appearance],
+  );
+
+  // Apply the resolved theme to the document as CSS custom properties.
   useEffect(() => {
     const root = document.documentElement;
-    root.dataset.theme = settings.theme;
-    const base = settings.theme === "dark"
-      ? { main: "#050505", sidebar: "#181818", panel: "#202020" }
-      : { main: "#FAFAF7", sidebar: "#FFFFFF", panel: "#FFFFFF" };
-    const vars = { ...accentVars(settings.appearance.accent), ...backgroundVars(settings.appearance, base) };
+    root.dataset.theme = activeTheme.base;
+    const vars = themeVars(applied);
     for (const [name, value] of Object.entries(vars)) root.style.setProperty(name, value);
-    root.dataset.customBg = usesCustomBackground(settings.appearance) ? "true" : "false";
-  }, [settings.theme, settings.appearance]);
+    root.dataset.customBg = usesCustomBackground(applied.background.mode) ? "true" : "false";
+  }, [activeTheme.base, applied]);
 
   // Current-time + rollover + reminder tick (30s).
   useEffect(() => {
@@ -339,6 +393,21 @@ export default function App() {
 
   const patchSettings = (p: Partial<GlobalSettings>) =>
     setState((s) => ({ ...s, settings: { ...s.settings, ...p } }));
+
+  const addCustomTheme = (theme: ThemeDefinition) =>
+    setState((s) => {
+      const others = (s.customThemes ?? []).filter((t) => t.id !== theme.id);
+      return { ...s, customThemes: [...others, theme] };
+    });
+
+  const deleteCustomTheme = (id: string) =>
+    setState((s) => ({
+      ...s,
+      customThemes: (s.customThemes ?? []).filter((t) => t.id !== id),
+      settings: s.settings.appearance.themeId === id
+        ? { ...s.settings, appearance: { ...s.settings.appearance, themeId: "dark" } }
+        : s.settings,
+    }));
 
   const updateSettings = (s: GlobalSettings) => {
     if (s.visibleEndMinutes <= s.visibleStartMinutes) {
@@ -1073,16 +1142,9 @@ export default function App() {
           <div className="totals-row"><span>💼 Optional work</span><strong>{formatDuration(week.optionalWork)}</strong></div>
         </div>
         <div className="nav-group">
+          <button type="button" className="nav-btn" aria-pressed={screen === "themes"} onClick={() => setScreen("themes")}>🎨 Themes</button>
           <button type="button" className="nav-btn" onClick={() => setCatOpen(true)}>🏷 Categories</button>
           <button type="button" className="nav-btn" onClick={() => setSettingsOpen(true)}>⚙ Settings</button>
-          <button
-            type="button"
-            className="nav-btn"
-            onClick={() => patchSettings({ theme: settings.theme === "dark" ? "light" : "dark" })}
-            title="Toggle dark mode"
-          >
-            {settings.theme === "dark" ? "☀ Light mode" : "🌙 Dark mode"}
-          </button>
         </div>
         <div className={`save-status${saveStatus.kind === "error" ? " error" : ""}`} role="status">{saveStatus.text}</div>
       </aside>
@@ -1105,7 +1167,7 @@ export default function App() {
               </div>
             )}
           </div>
-          <h1>{screen === "planner" ? active.name : screen === "today" ? "Today" : screen === "priorities" ? "Priorities" : "Progress"}</h1>
+          <h1>{screen === "planner" ? active.name : screen === "today" ? "Today" : screen === "priorities" ? "Priorities" : screen === "themes" ? "Themes" : "Progress"}</h1>
           {screen === "planner" && (
             <>
               <div className="segmented" role="group" aria-label="Week or day view">
@@ -1270,6 +1332,18 @@ export default function App() {
               onClearPast={clearPastDeadlines}
             />
           </div>
+        ) : screen === "themes" ? (
+          <div className="grid-wrap">
+            <ThemesView
+              themes={themes}
+              appearance={settings.appearance}
+              onChange={(appearance) => patchSettings({ appearance })}
+              onAddTheme={addCustomTheme}
+              onDeleteTheme={deleteCustomTheme}
+              onReload={() => void loadThemes()}
+              loadError={themeLoadError}
+            />
+          </div>
         ) : (
           <div className="grid-wrap">
             <ProgressView
@@ -1286,6 +1360,7 @@ export default function App() {
           <button type="button" aria-pressed={screen === "today"} onClick={() => setScreen("today")}>Today</button>
           <button type="button" aria-pressed={screen === "priorities"} onClick={() => setScreen("priorities")}>Priorities</button>
           <button type="button" aria-pressed={screen === "progress"} onClick={() => setScreen("progress")}>Progress</button>
+          <button type="button" aria-pressed={screen === "themes"} onClick={() => setScreen("themes")}>Themes</button>
           <button type="button" onClick={() => setSettingsOpen(true)}>Settings</button>
         </nav>
       </div>
@@ -1419,6 +1494,7 @@ export default function App() {
           onClearAll={clearAll}
           onRestorePoint={restoreRestorePoint}
           onTestNotification={testNotification}
+          onOpenThemes={() => { setSettingsOpen(false); setScreen("themes"); }}
         />
       )}
 

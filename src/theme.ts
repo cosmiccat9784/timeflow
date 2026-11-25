@@ -7,20 +7,14 @@
 
 export type BackgroundMode = "theme" | "solid" | "image";
 
-export interface AppearanceSettings {
-  /** Accent hex, drives buttons, selection outlines and active menu items. */
-  accent: string;
-  backgroundMode: BackgroundMode;
-  /** Base colour used when backgroundMode is "solid". */
-  backgroundColour: string;
-  /** Downscaled data URL used when backgroundMode is "image". */
-  backgroundImage: string | null;
-  /** 0–100 veil over the wallpaper so text stays readable. */
-  backgroundDim: number;
-}
+export type { AppearanceSettings } from "./types";
+import type { AppearanceSettings } from "./types";
 
 export const DEFAULT_APPEARANCE: AppearanceSettings = {
-  accent: "#FF940E",
+  themeId: "dark",
+  accent: "",
+  highlight: "",
+  font: "",
   backgroundMode: "theme",
   backgroundColour: "#0B1220",
   backgroundImage: null,
@@ -116,7 +110,11 @@ export function fillAppearance(raw: Partial<AppearanceSettings> | undefined): Ap
   const mode: BackgroundMode =
     a.backgroundMode === "solid" || a.backgroundMode === "image" ? a.backgroundMode : "theme";
   return {
-    accent: normaliseHex(a.accent ?? "") ?? DEFAULT_APPEARANCE.accent,
+    themeId: typeof a.themeId === "string" && /^[a-z0-9][a-z0-9-_]*$/i.test(a.themeId) ? a.themeId : DEFAULT_APPEARANCE.themeId,
+    // Empty string means "inherit from the theme".
+    accent: a.accent ? normaliseHex(a.accent) ?? "" : "",
+    highlight: a.highlight ? normaliseHex(a.highlight) ?? "" : "",
+    font: typeof a.font === "string" ? a.font.trim() : "",
     backgroundMode: mode,
     backgroundColour: normaliseHex(a.backgroundColour ?? "") ?? DEFAULT_APPEARANCE.backgroundColour,
     backgroundImage: typeof a.backgroundImage === "string" && a.backgroundImage.startsWith("data:")
@@ -124,6 +122,18 @@ export function fillAppearance(raw: Partial<AppearanceSettings> | undefined): Ap
       : null,
     backgroundDim: clampDim(a.backgroundDim),
   };
+}
+
+/** True when the persisted appearance still uses shipped defaults. */
+export function isDefaultAppearance(a: AppearanceSettings): boolean {
+  return (
+    a.themeId === DEFAULT_APPEARANCE.themeId &&
+    !a.accent &&
+    !a.highlight &&
+    !a.font &&
+    a.backgroundMode === "theme" &&
+    !a.backgroundImage
+  );
 }
 
 export interface ThemeVars {
@@ -135,7 +145,8 @@ export interface ThemeVars {
  * every control that already references it.
  */
 export function accentVars(accent: string): ThemeVars {
-  const value = normaliseHex(accent) ?? DEFAULT_APPEARANCE.accent;
+  const fallback = "#FF940E";
+  const value = normaliseHex(accent) ?? fallback;
   return {
     "--accent-orange": value,
     "--accent": value,

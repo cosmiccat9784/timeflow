@@ -74,8 +74,8 @@ describe("accent variables", () => {
     expect(v["--accent-ink"]).toBe("#FFFFFF");
   });
 
-  it("falls back to the default for invalid input", () => {
-    expect(accentVars("nope")["--accent-orange"]).toBe(DEFAULT_APPEARANCE.accent);
+  it("falls back to the default accent for invalid input", () => {
+    expect(accentVars("nope")["--accent-orange"]).toBe("#FF940E");
   });
 
   it("offers at least eight presets, all valid hex", () => {

@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "backgroundsPath": "backgrounds",
+  "themes": [
+    {
+      "id": "dark",
+      "name": "Dark",
+      "base": "dark",
+      "accent": "#FF940E",
+      "highlight": "#22D3EE",
+      "background": { "mode": "none" },
+      "builtin": true
+    },
+    {
+      "id": "light",
+      "name": "Light",
+      "base": "light",
+      "accent": "#FF940E",
+      "highlight": "#2E90FA",
+      "background": { "mode": "none" },
+      "builtin": true
+    },
+    {
+      "id": "midnight",
+      "name": "Midnight",
+      "base": "dark",
+      "accent": "#2E90FA",
+      "highlight": "#22D3EE",
+      "colours": { "main": "#0B1220", "sidebar": "#0E1626", "panel": "#111C2E", "elevated": "#16233A", "border": "#22314A" },
+      "background": { "mode": "solid", "colour": "#0B1220" },
+      "builtin": true
+    },
+    {
+      "id": "forest",
+      "name": "Forest",
+      "base": "dark",
+      "accent": "#3DD68C",
+      "highlight": "#A3E635",
+      "colours": { "main": "#0A1410", "sidebar": "#0D1A14", "panel": "#102019", "elevated": "#16281F", "border": "#1F3A2C" },
+      "background": { "mode": "solid", "colour": "#0A1410" },
+      "builtin": true
+    },
+    {
+      "id": "plum",
+      "name": "Plum",
+      "base": "dark",
+      "accent": "#C94BFF",
+      "highlight": "#F472B6",
+      "colours": { "main": "#150A18", "sidebar": "#1B0D1F", "panel": "#211227", "elevated": "#2A1831", "border": "#3A2143" },
+      "background": { "mode": "solid", "colour": "#150A18" },
+      "builtin": true
+    },
+    {
+      "id": "paper",
+      "name": "Paper",
+      "base": "light",
+      "accent": "#FF940E",
+      "highlight": "#2E90FA",
+      "background": { "mode": "solid", "colour": "#FAFAF7" },
+      "builtin": true
+    },
+    {
+      "id": "sand",
+      "name": "Sand",
+      "base": "light",
+      "accent": "#B45309",
+      "highlight": "#0EA5E9",
+      "colours": { "main": "#F4EFE6", "sidebar": "#FBF8F2", "panel": "#FFFDF9", "elevated": "#EFE9DD", "border": "#DED5C4" },
+      "background": { "mode": "solid", "colour": "#F4EFE6" },
+      "builtin": true
+    },
+    {
+      "id": "aurora",
+      "name": "Aurora",
+      "base": "dark",
+      "accent": "#22D3EE",
+      "highlight": "#A78BFA",
+      "fonts": { "heading": "\"Inter\", system-ui, sans-serif" },
+      "background": { "mode": "image", "image": "aurora.svg", "dim": 55 },
+      "builtin": true
+    },
+    {
+      "id": "sunset",
+      "name": "Sunset",
+      "base": "dark",
+      "accent": "#F97316",
+      "highlight": "#F472B6",
+      "background": { "mode": "image", "image": "sunset.svg", "dim": 50 },
+      "builtin": true
+    }
+  ]
+}

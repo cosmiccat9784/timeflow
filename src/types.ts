@@ -5,6 +5,8 @@
 export const SCHEMA_VERSION = 4;
 export const STORAGE_KEY = "timeflow.v1.state";
 
+import type { ThemeDefinition } from "./themes";
+
 /** Monday = 0 … Sunday = 6 (ISO-style, Monday-first per §3.5). */
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 export const WEEKDAYS: Weekday[] = [0, 1, 2, 3, 4, 5, 6];
@@ -108,8 +110,14 @@ export type Theme = "light" | "dark";
 
 /** Appearance controls stored alongside the other global settings. */
 export interface AppearanceSettings {
+  /** Preset or custom theme id (see `public/themes/themes.json`). */
+  themeId: string;
   /** Accent hex, drives buttons, selection outlines and active menu items. */
   accent: string;
+  /** Selection / today highlight. Empty means "use the theme's value". */
+  highlight: string;
+  /** Body font-family stack. Empty means "use the theme's value". */
+  font: string;
   backgroundMode: "theme" | "solid" | "image";
   backgroundColour: string;
   backgroundImage: string | null;
@@ -150,6 +158,8 @@ export interface PersistedState {
   activeTimetableId: string;
   categories: Category[];
   settings: GlobalSettings;
+  /** User-imported themes (presets live in public/themes/themes.json). */
+  customThemes: ThemeDefinition[];
   subjects: string[];
   weekRecords: Record<string, WeekRecord>;
   restorePoints: RestorePoint[];

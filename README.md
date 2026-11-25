@@ -189,11 +189,12 @@ src-tauri/
 - **Dark mode.** Spec §29 deferred it; implemented on request. Toggle in the
   sidebar or Settings → Appearance (fresh installs follow the OS preference).
   Every dropdown is a custom dark listbox; no native `<select>` remains.
-- **Theming.** Settings → Appearance adds an accent colour (9 presets plus a
-  free colour picker), 12 tinted backgrounds for light and dark, and an
-  optional custom wallpaper that is downscaled locally and stored in
-  `localStorage` — it never leaves the machine. Panels turn translucent over a
-  custom background; print always uses plain paper.
+- **Theming.** A dedicated **Themes** page holds every appearance control:
+  accent colour, highlight colour, font, tinted background or custom wallpaper.
+  Themes are JSON — see [THEMES.md](THEMES.md) for the format, or use
+  **Download template** in the app. Presets ship in `public/themes/themes.json`
+  with images in `public/themes/backgrounds/`; imported themes are stored with
+  your data. Light and Dark are ordinary presets in that list.
 - **No edge-resize, no overlap banner.** Both were removed by request.
 - **No tip banner.** Removed by request; the shortcuts remain in the tooltips
   and the File menu.

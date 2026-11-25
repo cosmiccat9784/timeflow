@@ -14,6 +14,7 @@ export interface BackupData {
   timetables: Timetable[];
   categories: Category[];
   settings: PersistedState["settings"];
+  customThemes?: PersistedState["customThemes"];
   subjects: string[];
   weekRecords: PersistedState["weekRecords"];
 }
@@ -26,6 +27,7 @@ export function createBackup(state: PersistedState): string {
     timetables: state.timetables,
     categories: state.categories,
     settings: state.settings,
+    customThemes: state.customThemes ?? [],
     subjects: state.subjects,
     weekRecords: state.weekRecords,
   };
@@ -71,6 +73,7 @@ export function parseBackup(text: string): { ok: true; data: BackupData } | { ok
   if (typeof data.settings !== "object" || data.settings === null)
     return { ok: false, error: "The backup settings are malformed." };
   if (!Array.isArray(data.subjects)) data.subjects = [];
+  if (!Array.isArray(data.customThemes)) data.customThemes = [];
   if (typeof data.weekRecords !== "object" || data.weekRecords === null) data.weekRecords = {};
   data.schemaVersion = SCHEMA_VERSION;
   return { ok: true, data };

@@ -3,7 +3,6 @@ import { SCHEMA_VERSION } from "../types";
 import { APP_VERSION } from "../store";
 import { formatTimeOption } from "../time";
 import { CustomSelect } from "./CustomSelect";
-import { AppearanceControls } from "./AppearanceControls";
 
 function timeOptions(): number[] {
   const out: number[] = [];
@@ -36,6 +35,7 @@ export function SettingsPanel({
   onClearAll,
   onRestorePoint,
   onTestNotification,
+  onOpenThemes,
 }: {
   settings: GlobalSettings;
   categories: Category[];
@@ -45,6 +45,7 @@ export function SettingsPanel({
   onClearAll: () => void;
   onRestorePoint: (id: string) => void;
   onTestNotification: () => void;
+  onOpenThemes: () => void;
 }) {
   const qh = settings.quietHours;
   return (
@@ -104,17 +105,9 @@ export function SettingsPanel({
         </div>
 
         <div className="settings-row">
-          <span id="theme-label">Appearance</span>
-          <div role="radiogroup" aria-labelledby="theme-label" style={{ display: "flex", gap: 8 }}>
-            <label><input type="radio" checked={settings.theme === "light"} onChange={() => onChange({ ...settings, theme: "light" })} /> Light</label>
-            <label><input type="radio" checked={settings.theme === "dark"} onChange={() => onChange({ ...settings, theme: "dark" })} /> Dark</label>
-          </div>
+          <span>Appearance</span>
+          <button type="button" className="btn" onClick={onOpenThemes}>Open Themes…</button>
         </div>
-
-        <AppearanceControls
-          appearance={settings.appearance}
-          onChange={(appearance) => onChange({ ...settings, appearance })}
-        />
 
         <div className="settings-row">
           <label htmlFor="set-toasts">Confirmation popups</label>

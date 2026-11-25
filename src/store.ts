@@ -36,6 +36,7 @@ export function defaultState(): PersistedState {
     activeTimetableId: tt.id,
     categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })),
     settings: defaultSettings(),
+    customThemes: [],
     subjects: ["Mathematics", "English", "Piano"],
     weekRecords: {},
     restorePoints: [],
@@ -87,6 +88,7 @@ export function migrateState(raw: unknown): PersistedState | null {
         s.categories = adoptSimpleLabels(s.categories);
       }
       s.settings = fillSettings(s.settings);
+      if (!Array.isArray(s.customThemes)) s.customThemes = [];
       if (!Array.isArray(s.subjects)) s.subjects = [];
       if (typeof s.weekRecords !== "object" || s.weekRecords === null) s.weekRecords = {};
       if (!Array.isArray(s.restorePoints)) s.restorePoints = [];
