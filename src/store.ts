@@ -5,7 +5,7 @@ import { nextWeekdayDate } from "./deadlines";
 import { validateActivity, validateCategories, validateDeadline } from "./validation";
 import { DEFAULT_APPEARANCE, fillAppearance } from "./theme";
 
-export const APP_VERSION = "0.3.19";
+export const APP_VERSION = "0.3.20";
 
 export function defaultSettings(): GlobalSettings {
   const darkOS = typeof window !== "undefined" && !!window.matchMedia?.("(prefers-color-scheme: dark)").matches;
