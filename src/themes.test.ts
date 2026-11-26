@@ -7,6 +7,7 @@ import {
   HIGHLIGHT_PRESETS,
   backgroundUrl,
   baseColours,
+  clearThemeOverrides,
   contrastInk,
   normaliseTheme,
   parseThemesFile,
@@ -15,6 +16,7 @@ import {
   themeTemplate,
   themeVars,
   usesCustomBackground,
+  withThemeApplied,
   type ThemeDefinition,
 } from "./themes";
 
@@ -290,5 +292,91 @@ describe("preset lists", () => {
   it("offers font stacks", () => {
     expect(FONT_PRESETS.length).toBeGreaterThanOrEqual(5);
     for (const f of FONT_PRESETS) expect(f.value.length).toBeGreaterThan(3);
+  });
+});
+
+describe("applying a preset clears overrides", () => {
+  const loaded = {
+    themeId: "midnight",
+    accent: "#A3E635",
+    highlight: "#FFD166",
+    font: "Georgia, serif",
+    backgroundMode: "image" as const,
+    backgroundColour: "#123456",
+    backgroundImage: "data:image/jpeg;base64,AAAA",
+    backgroundDim: 80,
+  };
+
+  it("drops accent, highlight, font, wallpaper and tint", () => {
+    const next = withThemeApplied(loaded, "forest");
+    expect(next.themeId).toBe("forest");
+    expect(next.accent).toBe("");
+    expect(next.highlight).toBe("");
+    expect(next.font).toBe("");
+    expect(next.backgroundMode).toBe("theme");
+    expect(next.backgroundImage).toBeNull();
+  });
+
+  it("clears the custom tint so the preset keeps its own colour", () => {
+    expect(withThemeApplied(loaded, "forest").backgroundColour).toBe("");
+  });
+
+  it("resolves to the preset's own accent afterwards", () => {
+    const court = parseThemesFile(JSON.parse(read("public/themes/themes.json")));
+    if (!court.ok) throw new Error(court.error);
+    const forest = court.file.themes.find((t) => t.id === "forest")!;
+    const applied = resolveTheme(forest, withThemeApplied(loaded, "forest"));
+    expect(applied.accent).toBe(forest.accent);
+    expect(applied.background.mode).toBe(forest.background?.mode);
+    expect(applied.background.colour).toBe(forest.background?.colour);
+  });
+
+  it("clearThemeOverrides keeps the selected theme", () => {
+    const next = clearThemeOverrides(loaded);
+    expect(next.themeId).toBe("midnight");
+    expect(next.accent).toBe("");
+    expect(next.backgroundMode).toBe("theme");
+  });
+});
+
+describe("background paths resolve to a real URL", () => {
+  it("preset images become absolute paths, not stylesheet-relative ones", () => {
+    // A bare "aurora.jpg" in a CSS custom property resolves under /assets/
+    // (the stylesheet's folder), which 404s. The loader must emit a rooted path.
+    const res = parseThemesFile(JSON.parse(read("public/themes/themes.json")));
+    if (!res.ok) throw new Error(res.error);
+    const aurora = res.file.themes.find((t) => t.id === "aurora")!;
+    const folder = `/themes/${(res.file.backgroundsPath ?? "backgrounds").replace(/^\/+/, "")}`;
+    expect(backgroundUrl(aurora.background?.image, folder)).toBe("/themes/backgrounds/aurora.jpg");
+  });
+
+  it("the app loader uses a leading slash", () => {
+    const app = read("src/App.tsx");
+    expect(app).toContain("const folder = `/themes/");
+  });
+
+  it("imported themes get rooted paths too", () => {
+    const view = read("src/components/ThemesView.tsx");
+    expect(view).toContain('backgroundUrl(image, "/themes/backgrounds")');
+  });
+});
+
+describe("accent contrast in the stylesheet", () => {
+  const css = () => read("src/styles.css");
+
+  it("accent-filled controls use the computed ink colour", () => {
+    const sheet = css();
+    expect(sheet).toContain("var(--accent-ink, #fff)");
+    // Primary button, segmented control and day tabs must all follow it.
+    const hits = sheet.match(/var\(--accent-ink, #fff\)/g) ?? [];
+    expect(hits.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("no accent background still hard-codes white text", () => {
+    const sheet = css();
+    const offenders = sheet.split("\n").filter((line) =>
+      /background:\s*var\(--accent-orange\)/.test(line) && /color:\s*#fff/.test(line),
+    );
+    expect(offenders).toEqual([]);
   });
 });

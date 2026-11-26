@@ -40,6 +40,8 @@ export interface ThemeFonts {
   size?: number;
 }
 
+import type { AppearanceSettings } from "./types";
+
 export interface ThemeDefinition {
   id: string;
   name: string;
@@ -235,7 +237,7 @@ export function resolveTheme(
     accent?: string;
     highlight?: string;
     font?: string;
-    backgroundMode?: "none" | "solid" | "image";
+    backgroundMode?: "none" | "solid" | "image" | "theme";
     backgroundColour?: string;
     backgroundImage?: string | null;
     backgroundDim?: number;
@@ -253,7 +255,7 @@ export function resolveTheme(
       size: clampFontSize(theme.fonts?.size),
     },
     background: {
-      mode: o.backgroundMode ?? bg.mode,
+      mode: o.backgroundMode && o.backgroundMode !== "theme" ? o.backgroundMode : bg.mode,
       colour: (isHex(o.backgroundColour) ? o.backgroundColour : bg.colour)?.toUpperCase(),
       image: o.backgroundImage !== undefined ? o.backgroundImage ?? undefined : bg.image,
       dim: clampDim(o.backgroundDim ?? bg.dim),
@@ -350,6 +352,27 @@ export function usesCustomBackground(mode: "none" | "solid" | "image"): boolean 
   return mode === "image" || mode === "solid";
 }
 
+/**
+ * Applying a preset is meant to give you exactly that theme, so every manual
+ * override is dropped. Use "Save current as theme…" to keep tweaks.
+ */
+export function withThemeApplied(current: AppearanceSettings, themeId: string): AppearanceSettings {
+  return {
+    ...current,
+    themeId,
+    accent: "",
+    highlight: "",
+    font: "",
+    backgroundMode: "theme",
+    backgroundColour: "",
+    backgroundImage: null,
+  };
+}
+
+/** Drop overrides but keep the currently selected theme. */
+export function clearThemeOverrides(current: AppearanceSettings): AppearanceSettings {
+  return withThemeApplied(current, current.themeId);
+}
 /** Ready-to-edit starter file shown by "Copy template". */
 export function themeTemplate(): string {
   return JSON.stringify(

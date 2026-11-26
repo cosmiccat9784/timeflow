@@ -118,7 +118,7 @@ export default function App() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const parsed = parseThemesFile(await res.json());
       if (!parsed.ok) throw new Error(parsed.error);
-      const folder = `themes/${parsed.file.backgroundsPath ?? "backgrounds"}`;
+      const folder = `/themes/${(parsed.file.backgroundsPath ?? "backgrounds").replace(/^\/+/, "")}`;
       setPresetThemes(
         parsed.file.themes.map((t) => ({
           ...t,

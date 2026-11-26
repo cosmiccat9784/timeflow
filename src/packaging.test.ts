@@ -141,6 +141,37 @@ describe("Windows publisher identity", () => {
   });
 });
 
+describe("installer contents", () => {
+  it("declares no extra bundle resources", () => {
+    const bundle = JSON.parse(read("src-tauri/tauri.conf.json")).bundle;
+    // Anything listed here ships inside the installer; only the frontend
+    // (dist/) plus the compiled binary should ever be bundled.
+    expect(bundle.resources).toBeUndefined();
+    expect(bundle.files).toBeUndefined();
+    expect(bundle.externalBin).toBeUndefined();
+  });
+
+  it("ships no unrelated projects from public/", () => {
+    const walk = (dir: string): string[] =>
+      fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+        e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)],
+      );
+    const files = walk(path.join(root, "public"));
+    for (const f of files) {
+      expect(f, `${f} must not be bundled`).not.toMatch(/MTN|Minecraft|MTNProbe/i);
+    }
+  });
+
+  it("the frontend entry point is the only HTML shipped", () => {
+    const walk = (dir: string): string[] =>
+      fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+        e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)],
+      );
+    const html = walk(path.join(root, "public")).filter((f) => f.endsWith(".html"));
+    expect(html).toHaveLength(0);
+  });
+});
+
 describe("README tells macOS users how to open an unsigned build", () => {
   it("documents the Gatekeeper override", () => {
     const readme = read("README.md");

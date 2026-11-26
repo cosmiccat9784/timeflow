@@ -5,10 +5,13 @@ import {
   ACCENT_PRESETS,
   FONT_PRESETS,
   HIGHLIGHT_PRESETS,
+  backgroundUrl,
+  clearThemeOverrides,
   parseThemesFile,
   resolveColours,
   resolveTheme,
   themeTemplate,
+  withThemeApplied,
 } from "../themes";
 import { ColorPicker } from "./ColorPicker";
 import { CustomSelect } from "./CustomSelect";
@@ -60,8 +63,8 @@ export function ThemesView({
   const patch = (p: Partial<AppearanceSettings>) => onChange({ ...appearance, ...p });
 
   const applyTheme = (id: string) => {
-    // Keep explicit overrides; only the theme changes.
-    patch({ themeId: id });
+    // A preset means exactly that look — drop any manual overrides.
+    onChange(withThemeApplied(appearance, id));
     setNotice(null);
   };
 
@@ -77,7 +80,17 @@ export function ThemesView({
         return;
       }
       for (const t of parsed.file.themes) {
-        onAddTheme({ ...t, builtin: false });
+        // Relative image paths are resolved against the shipped backgrounds
+        // folder; data URLs and absolute URLs are left alone.
+        const image = t.background?.image;
+        const resolved = image && !/^(data:|https?:)/i.test(image)
+          ? backgroundUrl(image, "/themes/backgrounds") ?? undefined
+          : image;
+        onAddTheme({
+          ...t,
+          builtin: false,
+          background: t.background ? { ...t.background, image: resolved } : undefined,
+        });
       }
       setNotice(`Imported ${parsed.file.themes.length} theme(s).`);
     } catch (e) {
@@ -207,6 +220,7 @@ export function ThemesView({
         <button type="button" className="btn" onClick={downloadTemplate}>Download template</button>
         <button type="button" className="btn" onClick={onReload}>Reload presets</button>
         <button type="button" className="btn" onClick={saveAs} disabled={!active}>Save current as theme…</button>
+        <button type="button" className="btn" onClick={() => { onChange(clearThemeOverrides(appearance)); setNotice("Overrides cleared — using the theme as shipped."); }}>Reset overrides</button>
       </div>
 
       {applied && (
@@ -341,8 +355,9 @@ export function ThemesView({
           )}
 
           <p className="derived">
-            Applying a different preset keeps your overrides. Use “Save current as theme…” to bake
-            them into a reusable theme, or “Inherit” to drop a single override.
+            Applying a preset gives you exactly that theme and clears these overrides. Use “Save
+            current as theme…” to keep your tweaks, or “Reset overrides” to return to the theme as
+            shipped.
           </p>
         </>
       )}
