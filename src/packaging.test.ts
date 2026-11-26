@@ -217,3 +217,27 @@ describe("frameless window and tabs", () => {
     expect(bar).toContain('e.key.toLowerCase() === "w"');
   });
 });
+describe("window chrome cannot be de-positioned by a background", () => {
+  const css = () => read("src/styles.css");
+
+  it("custom-background stacking rules never target every .app child", () => {
+    // `[data-custom-bg] .app > *` used to override .titlebar's position: fixed,
+    // which pushed the whole layout down and clipped the grid.
+    expect(css()).not.toContain(".app > * {");
+    expect(css()).toContain("data-custom-bg=\"true\"] .app > .sidebar");
+  });
+
+  it("the title bar stays fixed and above the app body", () => {
+    const sheet = css();
+    const bar = sheet.slice(sheet.indexOf(".titlebar {"));
+    expect(bar).toContain("position: fixed");
+    expect(bar).toContain("z-index: 160");
+  });
+
+  it("drag regions are limited to dedicated spacers so buttons stay clickable", () => {
+    const bar = read("src/components/TitleBar.tsx");
+    const dragRegions = bar.match(/data-tauri-drag-region/g) ?? [];
+    expect(dragRegions).toHaveLength(1);
+    expect(bar).not.toContain('className="tabstrip" role="tablist" aria-label="Open timetables" data-tauri-drag-region');
+  });
+});

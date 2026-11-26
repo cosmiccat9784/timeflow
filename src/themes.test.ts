@@ -380,3 +380,34 @@ describe("accent contrast in the stylesheet", () => {
     expect(offenders).toEqual([]);
   });
 });
+describe("a null image override must not erase the theme wallpaper", () => {
+  const themed: ThemeDefinition = {
+    id: "wall",
+    name: "Wall",
+    base: "dark",
+    accent: "#2E90FA",
+    highlight: "#22D3EE",
+    background: { mode: "image", image: "/themes/backgrounds/aurora.jpg", dim: 50 },
+  };
+
+  it("keeps the theme image when the override is null", () => {
+    const applied = resolveTheme(themed, { backgroundImage: null });
+    expect(applied.background.image).toBe("/themes/backgrounds/aurora.jpg");
+    expect(themeVars(applied)["--app-bg-image"]).toContain("aurora.jpg");
+  });
+
+  it("uses a user-picked data URL when provided", () => {
+    const applied = resolveTheme(themed, { backgroundImage: "data:image/jpeg;base64,AAAA" });
+    expect(applied.background.image).toBe("data:image/jpeg;base64,AAAA");
+  });
+
+  it("applying the preset keeps its wallpaper after clearing overrides", () => {
+    const cleared = withThemeApplied(
+      { themeId: "dark", accent: "", highlight: "", font: "", backgroundMode: "theme", backgroundColour: "", backgroundImage: null, backgroundDim: 45 },
+      "wall",
+    );
+    const applied = resolveTheme(themed, cleared);
+    expect(applied.background.mode).toBe("image");
+    expect(applied.background.image).toBe("/themes/backgrounds/aurora.jpg");
+  });
+});

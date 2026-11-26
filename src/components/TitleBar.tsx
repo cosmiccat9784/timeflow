@@ -89,11 +89,11 @@ export function TitleBar({
 
   return (
     <div className={`titlebar${tauri ? " tauri" : ""}`}>
-      <div className="titlebar-brand" data-tauri-drag-region aria-hidden="true">
+      <div className="titlebar-brand" aria-hidden="true">
         <span className="titlebar-logo">T</span>
       </div>
 
-      <div className="tabstrip" role="tablist" aria-label="Open timetables" data-tauri-drag-region>
+      <div className="tabstrip" role="tablist" aria-label="Open timetables">
         {tabs.map((t) => (
           <div
             key={t.id}

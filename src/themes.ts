@@ -257,7 +257,8 @@ export function resolveTheme(
     background: {
       mode: o.backgroundMode && o.backgroundMode !== "theme" ? o.backgroundMode : bg.mode,
       colour: (isHex(o.backgroundColour) ? o.backgroundColour : bg.colour)?.toUpperCase(),
-      image: o.backgroundImage !== undefined ? o.backgroundImage ?? undefined : bg.image,
+      // null means "no local override" — keep the theme's own image.
+      image: typeof o.backgroundImage === "string" ? o.backgroundImage : bg.image,
       dim: clampDim(o.backgroundDim ?? bg.dim),
     },
   };
