@@ -15,6 +15,7 @@ export function defaultSettings(): GlobalSettings {
     clockFormat: "12h",
     theme: darkOS ? "dark" : "light",
     appearance: { ...DEFAULT_APPEARANCE },
+    openTimetableIds: [],
     switchPair: [...DEFAULT_SWITCH_PAIR] as [string, string],
     showToasts: true,
     quietHours: { start: 1320, end: 420 }, // 10pm–7am default
@@ -53,6 +54,7 @@ function fillSettings(s: Partial<GlobalSettings> | undefined): GlobalSettings {
   if (typeof merged.showToasts !== "boolean") merged.showToasts = true;
   if (merged.theme !== "light" && merged.theme !== "dark") merged.theme = "light";
   merged.appearance = fillAppearance((merged as Partial<GlobalSettings>).appearance);
+  if (!Array.isArray(merged.openTimetableIds)) merged.openTimetableIds = [];
   if (!merged.quietHours || typeof merged.quietHours !== "object")
     merged.quietHours = { ...d.quietHours };
   if (!merged.reminderDefaults || typeof merged.reminderDefaults !== "object")

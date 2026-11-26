@@ -32,6 +32,8 @@ import { RecapModal, recapToCsv, type RecapData } from "./components/RecapModal"
 import { PrioritiesView } from "./components/PrioritiesView";
 import { CustomSelect } from "./components/CustomSelect";
 import { ThemesView } from "./components/ThemesView";
+import { TitleBar } from "./components/TitleBar";
+import { closeTab, pruneTabs } from "./tabs";
 import { parseThemesFile, resolveTheme, themeVars, usesCustomBackground, backgroundUrl } from "./themes";
 import type { ThemeDefinition } from "./themes";
 
@@ -601,9 +603,49 @@ export default function App() {
 
   const switchTimetable = (id: string) => {
     setSelectedKey(null);
-    setState((s) => ({ ...s, activeTimetableId: id }));
+    setState((s) => ({
+      ...s,
+      activeTimetableId: id,
+      settings: {
+        ...s.settings,
+        openTimetableIds: s.settings.openTimetableIds.includes(id)
+          ? s.settings.openTimetableIds
+          : [...s.settings.openTimetableIds, id],
+      },
+    }));
     say(`Switched to ${timetables.find((t) => t.id === id)?.name ?? "timetable"}`);
   };
+
+  /** Close a tab without deleting the timetable. */
+  const closeTimetableTab = (id: string) => {
+    const current = pruneTabs(settings.openTimetableIds, timetables.map((t) => t.id), active.id);
+    const next = closeTab(current, id);
+    if (next.open.length === current.open.length) return;
+    setState((s) => ({
+      ...s,
+      activeTimetableId: next.activeId,
+      settings: { ...s.settings, openTimetableIds: next.open },
+    }));
+    setSelectedKey(null);
+  };
+
+  const reorderTimetableTabs = (next: string[]) =>
+    patchSettings({ openTimetableIds: next });
+
+  /** Keep the stored tab list valid as timetables are added or deleted. */
+  useEffect(() => {
+    const pruned = pruneTabs(settings.openTimetableIds, timetables.map((t) => t.id), active.id);
+    if (
+      pruned.activeId !== active.id ||
+      pruned.open.join("|") !== settings.openTimetableIds.join("|")
+    ) {
+      setState((s) => ({
+        ...s,
+        activeTimetableId: pruned.activeId,
+        settings: { ...s.settings, openTimetableIds: pruned.open },
+      }));
+    }
+  }, [settings.openTimetableIds, timetables, active.id]);
 
   const addTimetable = () => {
     const name = window.prompt("Timetable name:", `Timetable ${timetables.length + 1}`);
@@ -1120,6 +1162,16 @@ export default function App() {
 
   return (
     <div className={`app${focusMode ? " focus" : ""}`}>
+      <TitleBar
+        timetables={timetables}
+        openIds={settings.openTimetableIds.length ? settings.openTimetableIds : [active.id]}
+        activeId={active.id}
+        onSwitch={switchTimetable}
+        onCreate={addTimetable}
+        onOpen={(id) => switchTimetable(id)}
+        onClose={closeTimetableTab}
+        onReorder={reorderTimetableTabs}
+      />
       <aside className="sidebar" aria-label="Planner navigation">
         <div className="field" style={{ marginBottom: 0 }}>
           <label htmlFor="tt-switch">Timetable</label>

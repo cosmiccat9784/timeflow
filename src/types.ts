@@ -142,6 +142,8 @@ export interface GlobalSettings {
   theme: Theme;
   /** accent colour, tinted background and optional wallpaper */
   appearance: AppearanceSettings;
+  /** Timetable ids shown as tabs, in order. */
+  openTimetableIds: string[];
   /** quick-switch pair, default [study, personal] */
   switchPair: [string, string];
   /** routine confirmation toasts (Switched, Deleted…); errors always show */

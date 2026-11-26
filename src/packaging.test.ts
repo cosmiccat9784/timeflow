@@ -179,3 +179,41 @@ describe("README tells macOS users how to open an unsigned build", () => {
     expect(readme.toLowerCase()).toMatch(/unidentified developer|open anyway|xattr/);
   });
 });
+
+describe("frameless window and tabs", () => {
+  const conf = () => JSON.parse(read("src-tauri/tauri.conf.json"));
+
+  it("hides the native title bar", () => {
+    const w = conf().app.windows[0];
+    expect(w.decorations).toBe(false);
+    expect(w.resizable).toBe(true);
+  });
+
+  it("keeps a minimum window size so the custom chrome cannot collapse", () => {
+    const w = conf().app.windows[0];
+    expect(w.minWidth).toBeGreaterThanOrEqual(360);
+    expect(w.minHeight).toBeGreaterThanOrEqual(560);
+  });
+
+  it("integrates minimise/maximise/close in the app", () => {
+    const bar = read("src/components/TitleBar.tsx");
+    expect(bar).toContain("getCurrentWindow");
+    expect(bar).toContain("w.minimize()");
+    expect(bar).toContain("w.toggleMaximize()");
+    expect(bar).toContain("w.close()");
+    expect(bar).toContain("data-tauri-drag-region");
+  });
+
+  it("renders timetable tabs with close buttons and a new-tab menu", () => {
+    const bar = read("src/components/TitleBar.tsx");
+    expect(bar).toContain('role="tablist"');
+    expect(bar).toContain("tab-close");
+    expect(bar).toContain("aria-label=\"Open a timetable\"");
+  });
+
+  it("supports Ctrl+Tab and Ctrl+W", () => {
+    const bar = read("src/components/TitleBar.tsx");
+    expect(bar).toContain('e.key === "Tab"');
+    expect(bar).toContain('e.key.toLowerCase() === "w"');
+  });
+});
