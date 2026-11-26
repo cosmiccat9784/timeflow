@@ -164,6 +164,8 @@ src-tauri/
 - [x] Guided flow: file → sheet → preview/correct (invalid times need explicit fix or exclusion) → replace/merge/new-timetable
 - [x] Restore point before every import; undoable
 - [x] XLSX export (visual grid + flat Data sheet), CSV export, JSON backup/restore with validation
+- [x] Portable **`.timeflow`** files: open/save a single timetable (categories included) — plain JSON, works the same on Windows, macOS and Linux
+- [x] Excel **and** CSV import into the same guided preview, so Linux users never need Excel
 - [x] Category manager: add/rename/recolour/re-icon/counting, delete with mandatory replacement
 - [x] Multiple named timetables (create/rename/delete/switch, shared categories+settings)
 
@@ -228,3 +230,32 @@ The workflow already imports and applies both certificates when those secrets
 exist, so no code changes are needed once a certificate is purchased. The
 installer publisher metadata (Apps & Features) already reads
 **cosmiccat9784**.
+
+## File types
+
+| File | Contains | Use it for |
+|---|---|---|
+| `*.timeflow` | one timetable + the categories it uses | sharing/moving a single week; opens as a new tab |
+| `timeflow-backup-*.json` | everything: all timetables, categories, settings, week records | full backup / restore |
+| `*.csv` | flat activity list (Name, Weekday, Start, End, Category, Subject, Notes, OptionalWork) | spreadsheet interchange, Linux-friendly |
+| `*.xlsx` | styled visual grid **and** a flat `Data` sheet | printing/sharing, re-imports cleanly |
+
+`.timeflow` is plain UTF-8 JSON and human-readable:
+
+```json
+{
+  "format": "timeflow.timetable",
+  "formatVersion": 1,
+  "schemaVersion": 4,
+  "appVersion": "0.3.x",
+  "exportedAt": "2026-11-27T00:00:00.000Z",
+  "timetable": { "id": "tt_…", "name": "School Week", "activities": [], "deadlines": [] },
+  "categories": []
+}
+```
+
+Open one with **File → Open .timeflow…**. It is validated fully before anything is
+applied, appears as a **new tab**, and categories are matched by id then by name so
+you never end up with two “Study” categories.
+
+**File → Import Excel / CSV…** handles both formats through the same preview.

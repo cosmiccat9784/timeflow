@@ -8,7 +8,7 @@ import { UndoStack, type Snapshot } from "./undo";
 import { computeMergedBlocks, type MergedBlock } from "./merge";
 import { assignLanes, conflictsForCandidate, findConflicts } from "./conflicts";
 import { allDayTotals, weekTotals } from "./totals";
-import { defaultTimetable, defaultSettings, loadState, saveState, weekdayToday, minutesNow } from "./store";
+import { APP_VERSION, defaultTimetable, defaultSettings, loadState, saveState, weekdayToday, minutesNow } from "./store";
 import { sampleActivities, sampleDeadlines } from "./sample";
 import {
   currentWeekId, recordKey, freshWeekRecord, withCompletion, withMinutes,
@@ -18,6 +18,14 @@ import { computeDueReminders } from "./reminders";
 import { pickFile, saveFile, encodeText } from "./native";
 import { activitiesToCsv } from "./exportCsv";
 import { createBackup, parseBackup } from "./backup";
+import {
+  createTimeflowFile,
+  mergeCategories,
+  parseTimeflowFile,
+  remapTimetable,
+  timeflowFileName,
+  uniqueTimetableName,
+} from "./timeflowFile";
 import { PlannerGrid, type EmptySlotRequest, type MenuRequest } from "./components/PlannerGrid";
 import { CategoryMenu, EmptyMenu } from "./components/CategoryMenu";
 import { ActivityEditor, draftFromActivity, type EditorDraft } from "./components/ActivityEditor";
@@ -780,6 +788,56 @@ export default function App() {
     else notify({ message: "Backup saved." });
   };
 
+  const doSaveTimeflow = async () => {
+    const r = await saveFile(
+      timeflowFileName(active.name),
+      encodeText(createTimeflowFile(active, categories, APP_VERSION)),
+      "application/json",
+    );
+    if (r.cancelled) return;
+    if (!r.ok) setToast({ message: r.error ?? "Could not save the timetable." });
+    else notify({ message: `Saved ${timeflowFileName(active.name)}.` });
+  };
+
+  const doOpenTimeflow = async () => {
+    const f = await pickFile(["timeflow", "json"], "Time Flow timetable");
+    if (!f) return;
+    const parsed = parseTimeflowFile(new TextDecoder().decode(f.data));
+    if (!parsed.ok) {
+      setToast({ message: parsed.error });
+      return;
+    }
+    const merged = mergeCategories(categories, parsed.categories);
+    const imported = remapTimetable(parsed.timetable, merged.remap);
+    // Always a fresh id so opening a file twice gives two independent tabs.
+    const tt: Timetable = {
+      ...imported,
+      id: uid("tt"),
+      name: uniqueTimetableName(imported.name, timetables.map((t) => t.name)),
+    };
+    const err = commit({ timetables: [...timetables, tt], categories: merged.categories }, `Opened ${tt.name}`);
+    if (err) {
+      setToast({ message: err });
+      return;
+    }
+    setState((s) => ({
+      ...s,
+      activeTimetableId: tt.id,
+      settings: {
+        ...s.settings,
+        openTimetableIds: s.settings.openTimetableIds.includes(tt.id)
+          ? s.settings.openTimetableIds
+          : [...s.settings.openTimetableIds, tt.id],
+      },
+    }));
+    setScreen("planner");
+    notify({
+      message: `Opened "${tt.name}"${merged.added ? ` · ${merged.added} new categor${merged.added === 1 ? "y" : "ies"}` : ""}.`,
+      undoLabel: "Undo",
+      onUndo: doUndo,
+    });
+  };
+
   const doRestore = async () => {
     const f = await pickFile(["json"], "Time Flow backup");
     if (!f) return;
@@ -1207,11 +1265,15 @@ export default function App() {
             <button type="button" className="btn" aria-haspopup="menu" aria-expanded={fileMenuOpen} onClick={() => setFileMenuOpen((v) => !v)}>File ▾</button>
             {fileMenuOpen && (
               <div className="menu file-dropdown" role="menu" data-file-menu>
-                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); setImportOpen(true); }}>⬇ Import…</button>
-                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doExportXlsx(); }}>⬆ Excel</button>
-                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doExportCsv(); }}>⬆ CSV</button>
-                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doBackup(); }}>💾 Backup</button>
-                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doRestore(); }}>↩ Restore…</button>
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); setImportOpen(true); }}>⬇ Import Excel / CSV…</button>
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doExportXlsx(); }}>⬆ Export Excel</button>
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doExportCsv(); }}>⬆ Export CSV</button>
+                <hr />
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doOpenTimeflow(); }}>📂 Open .timeflow…</button>
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doSaveTimeflow(); }}>💾 Save .timeflow…</button>
+                <hr />
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doBackup(); }}>🗄 Backup all…</button>
+                <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); void doRestore(); }}>↩ Restore backup…</button>
                 <button type="button" role="menuitem" onClick={() => { setFileMenuOpen(false); window.print(); }}>🖨 Print…</button>
                 <hr />
                 <button type="button" role="menuitem" disabled={!undoRef.current.canUndo} onClick={() => { setFileMenuOpen(false); doUndo(); }}>↩ Undo{undoRef.current.undoLabel ? `: ${undoRef.current.undoLabel}` : ""}</button>
